@@ -210,6 +210,9 @@ function renderWire(wire) {
   list.innerHTML = "";
   for (var i = 0; i < wire.length; i++) {
     var w = wire[i];
+    var aiBlock = w.ai_summary
+      ? '<div class="ai-note"><span class="ai-label">AI-GENERATED — verify with the linked source</span><p>' + esc(w.ai_summary) + '</p></div>'
+      : '';
     var li = document.createElement("li");
     li.className = "wire-item";
     li.innerHTML =
@@ -217,7 +220,8 @@ function renderWire(wire) {
       '<div class="wire-meta">' +
         '<span class="meta-label">Source:</span> ' + esc(w.source) +
         ' · <span class="meta-label">Published:</span> ' + esc(w.published) +
-      '</div>';
+      '</div>' +
+      aiBlock;
     list.appendChild(li);
   }
 }

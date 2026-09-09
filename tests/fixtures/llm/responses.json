@@ -1,0 +1,22 @@
+[
+  {
+    "name": "valid",
+    "content": "{\"ai_summary\": \"A critical BLE vulnerability in the Unitree Go2 quadruped robot allows remote attackers to gain unauthorized access. Buyers should verify firmware versions and apply available patches immediately.\", \"ai_category\": \"vuln\", \"ai_vendor\": \"Unitree\", \"ai_model\": \"Go2\", \"ai_robot_class\": \"quadruped\", \"ai_severity\": {\"source\": \"estimated\", \"value\": \"high\"}}"
+  },
+  {
+    "name": "fence_wrapped",
+    "content": "```json\n{\"ai_summary\": \"Security researchers discovered a remote code execution vulnerability affecting consumer robot firmware. This impacts device safety and data privacy.\", \"ai_category\": \"vuln\", \"ai_vendor\": \"Acme Robotics\", \"ai_model\": null, \"ai_robot_class\": \"consumer\", \"ai_severity\": {\"source\": \"estimated\", \"value\": \"medium\"}}\n```"
+  },
+  {
+    "name": "prose_embedded",
+    "content": "Based on my analysis of this article, here is the structured extraction:\n\n{\"ai_summary\": \"A physical safety incident was reported where a humanoid robot malfunctioned during a public demonstration, raising concerns about operational safety protocols.\", \"ai_category\": \"safety\", \"ai_vendor\": \"TechCorp\", \"ai_model\": \"Atlas Mk2\", \"ai_robot_class\": \"humanoid\", \"ai_severity\": {\"source\": \"estimated\", \"value\": \"critical\"}}\n\nThis classification is based on the keywords and context in the source article."
+  },
+  {
+    "name": "malformed",
+    "content": "I apologize, but I am unable to classify this article into the required categories. The content appears to be a general technology news piece that does not specifically relate to robot security incidents."
+  },
+  {
+    "name": "illegal_category",
+    "content": "{\"ai_summary\": \"This article discusses a malware attack targeting industrial control systems connected to robotic arms.\", \"ai_category\": \"malware\", \"ai_vendor\": \"IndustrialBot\", \"ai_model\": \"Arm-X\", \"ai_robot_class\": \"consumer\", \"ai_severity\": {\"source\": \"estimated\", \"value\": \"medium\"}}"
+  }
+]

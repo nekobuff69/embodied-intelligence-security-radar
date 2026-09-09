@@ -1,0 +1,30 @@
+[
+  {
+    "feed_type": "reddit",
+    "title": "Unitree Go2 firmware vulnerability lets anyone take over the robot",
+    "url": "https://www.reddit.com/r/robotics/comments/abc001/unitree_go2_firmware_vulnerability/",
+    "published": "2026-08-10",
+    "summary": "Fixture: security researcher found a critical vulnerability in Unitree Go2 quadruped firmware allowing full takeover."
+  },
+  {
+    "feed_type": "reddit",
+    "title": "r/robotics — weekly build thread",
+    "url": "https://www.reddit.com/r/robotics/comments/xyz999/weekly_build_thread/",
+    "published": "2026-08-12",
+    "summary": "Fixture: weekly build thread for robotics enthusiasts. Share your projects!"
+  },
+  {
+    "feed_type": "reddit",
+    "title": "Humanoid robot arm demo at CES impressed everyone",
+    "url": "https://www.reddit.com/r/Robots/comments/def456/ces_humanoid_arm_demo/",
+    "published": "2026-07-20",
+    "summary": "Fixture: impressive humanoid robot arm demo at CES 2026. No security concerns mentioned."
+  },
+  {
+    "feed_type": "reddit",
+    "title": "Unitree B2 security audit reveals hardcoded credentials",
+    "url": "https://www.reddit.com/r/unitree/comments/ghi789/b2_security_audit/",
+    "published": "2026-06-15",
+    "summary": "Fixture: independent security audit found hardcoded admin credentials in Unitree B2 quadruped robot firmware."
+  }
+]

@@ -54,6 +54,51 @@
       "type": "press_rss",
       "name": "TechCrunch Robotics",
       "url": "https://techcrunch.com/category/robotics/feed/"
+    },
+    {
+      "type": "reddit",
+      "name": "Reddit: r/robotics",
+      "url": "https://www.reddit.com/r/robotics/hot.json?limit=50"
+    },
+    {
+      "type": "reddit",
+      "name": "Reddit: r/Robots",
+      "url": "https://www.reddit.com/r/Robots/hot.json?limit=50"
+    },
+    {
+      "type": "reddit",
+      "name": "Reddit: r/unitree",
+      "url": "https://www.reddit.com/r/unitree/hot.json?limit=50"
+    },
+    {
+      "type": "hn",
+      "name": "HN: robot security",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?query=robot+security&hitsPerPage=50"
+    },
+    {
+      "type": "hn",
+      "name": "HN: robot hacked",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?query=robot+hacked&hitsPerPage=50"
+    },
+    {
+      "type": "nvd",
+      "name": "NVD: robot CVE keyword feed",
+      "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=robot&resultsPerPage=50"
+    },
+    {
+      "type": "github_advisory",
+      "name": "GitHub Security Advisories (robot keyword)",
+      "url": "https://api.github.com/advisories"
+    },
+    {
+      "type": "vendor_page",
+      "name": "Unitree Official Site",
+      "url": "https://www.unitree.com/"
+    },
+    {
+      "type": "vendor_page",
+      "name": "Unitree Community Support",
+      "url": "https://www.unitree.com/support/"
     }
   ]
 }

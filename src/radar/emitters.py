@@ -16,8 +16,10 @@ def _patch_lag_days(first_seen: str, today: date) -> int:
     return max((today - fs).days, 0)
 
 
-def emit(registry: Registry, site_dir: str | Path) -> None:
-    """Write site/data/radar.json derived from *registry*."""
+def emit(registry: Registry, site_dir: str | Path, site_url: str = "") -> None:
+    """Write site/data/radar.json derived from *registry* and site/feed.xml."""
+    from .feed import emit_feed
+
     site = Path(site_dir)
     out_dir = site / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -82,3 +84,5 @@ def emit(registry: Registry, site_dir: str | Path) -> None:
     (out_dir / "radar.json").write_text(
         json.dumps(radar, indent=2, ensure_ascii=False) + "\n"
     )
+
+    emit_feed(registry, site, site_url)

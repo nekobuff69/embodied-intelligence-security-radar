@@ -76,6 +76,13 @@ class Item:
     published: str
     cve_ids: list[str] = field(default_factory=list)
     fetched_at: str = ""
+    # LLM-pass enrichment (optional; clusterer later lifts these into Incidents)
+    ai_summary: str | None = None
+    ai_category: str | None = None
+    ai_vendor: str | None = None
+    ai_model: str | None = None
+    ai_robot_class: str | None = None
+    ai_severity: Severity | None = None
 
     def __post_init__(self) -> None:
         _require(self.source in SOURCES, f"item.source {self.source!r} not in {sorted(SOURCES)}")
@@ -84,6 +91,10 @@ class Item:
         _check_date(self.published, "item.published")
         for cve in self.cve_ids:
             _require(bool(_CVE.match(cve)), f"malformed CVE id {cve!r}")
+        if self.ai_category is not None:
+            _require(self.ai_category in CATEGORIES, f"ai_category {self.ai_category!r} not in {sorted(CATEGORIES)}")
+        if self.ai_robot_class is not None:
+            _require(self.ai_robot_class in ROBOT_CLASSES, f"ai_robot_class {self.ai_robot_class!r} not in {sorted(ROBOT_CLASSES)}")
         if not self.fetched_at:
             self.fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 

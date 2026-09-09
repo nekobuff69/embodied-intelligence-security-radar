@@ -1,0 +1,30 @@
+[
+  {
+    "feed_type": "hn",
+    "title": "Show HN: I hacked a humanoid robot and found 3 vulnerabilities",
+    "url": "https://example.com/hn/humanoid-hack-writeup",
+    "published": "2026-08-05",
+    "summary": "Fixture: security researcher details three vulnerabilities found in a humanoid robot platform during a penetration test."
+  },
+  {
+    "feed_type": "hn",
+    "title": "Best robot vacuum cleaners 2026 — comparison guide",
+    "url": "https://example.com/hn/robot-vacuum-comparison",
+    "published": "2026-08-11",
+    "summary": "Fixture: comparison of the best robot vacuum cleaners available in 2026."
+  },
+  {
+    "feed_type": "hn",
+    "title": "Unitree robotic dog hack exposed camera feed to anyone on the network",
+    "url": "https://example.com/hn/unitree-camera-hack",
+    "published": "2026-07-28",
+    "summary": "Fixture: a vulnerability in the Unitree quadruped allowed unauthenticated access to its camera stream."
+  },
+  {
+    "feed_type": "hn",
+    "title": "New quadruped robot walks faster than ever before",
+    "url": "https://example.com/hn/fast-quadruped",
+    "published": "2026-08-01",
+    "summary": "Fixture: researchers built a quadruped robot that achieves unprecedented walking speed."
+  }
+]

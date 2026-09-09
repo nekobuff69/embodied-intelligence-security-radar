@@ -33,6 +33,14 @@ INCIDENT_TERMS: frozenset[str] = frozenset({
     "security",
 })
 
+# --- Negation guards: hedged "no security issue" phrasing is not an incident ---
+NEGATION_TERMS: frozenset[str] = frozenset({
+    "no security concern",
+    "no security issues",
+    "not a security",
+    "no vulnerab",
+})
+
 # --- Exclusion terms: items matching these are dropped ---
 EXCLUDE_DRONE_TERMS: frozenset[str] = frozenset({
     "drone",
@@ -68,14 +76,14 @@ def apply_gate(items: list[Item]) -> list[Item]:
     (the item must still contain a robot term).
     """
     import re
-    cve_re = re.compile(r"CVE-\d{4}-\d{4,}")
+    cve_re = re.compile(r"CVE-\d{4}-\d{4,}", re.IGNORECASE)
 
     kept: list[Item] = []
     for item in items:
         text = f"{item.title} {item.body}".lower()
 
-        # Exclusions first
-        if any(_has_term(text, ex) for ex in _ALL_EXCLUDES):
+        # Exclusions first (domain scopes + negated-security phrasing)
+        if any(_has_term(text, ex) for ex in _ALL_EXCLUDES) or any(_has_term(text, ng) for ng in NEGATION_TERMS):
             continue
 
         # Robot term required

@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
 from radar.emitters import emit
+from radar.enrich import enrich
 from radar.fetchers import fetch
 from radar.gate import apply_gate
 from radar.registry import apply_items, load, save
@@ -91,6 +93,23 @@ def run(
     # 3. Gate
     gated_items = apply_gate(fetched_items)
 
+    # 3b. LLM enrichment (skipped when RADAR_LLM_API_KEY is unset)
+    enriched_count = 0
+    llm_provider = "skipped"
+    llm_model = "skipped"
+    llm_key = os.environ.get("RADAR_LLM_API_KEY", "")
+    if llm_key:
+        base_url = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
+        model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+        llm_provider = base_url
+        llm_model = model
+        enrich(gated_items, base_url, model, llm_key)
+        enriched_count = sum(
+            1
+            for it in gated_items
+            if it.ai_category is not None or it.ai_summary is not None
+        )
+
     # 4. Apply (idempotent dedup)
     reg, added = apply_items(reg, gated_items)
 
@@ -104,6 +123,9 @@ def run(
         "fetched": len(fetched_items),
         "gated": len(gated_items),
         "added": added,
+        "enriched": enriched_count,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
     }
     log.info("Pipeline complete: %s", summary)
     return summary

@@ -1,0 +1,30 @@
+[
+  {
+    "feed_type": "github_advisory",
+    "title": "Critical firmware vulnerability in Unitree Go2 quadruped robot",
+    "url": "https://github.com/advisories/GHSA-xxxx-aaaa-bbbb",
+    "published": "2026-07-10",
+    "summary": "Fixture: critical vulnerability in Unitree Go2 quadruped robot firmware allows unauthenticated remote access."
+  },
+  {
+    "feed_type": "github_advisory",
+    "title": "Medium severity issue in npm package left-pad",
+    "url": "https://github.com/advisories/GHSA-yyyy-cccc-dddd",
+    "published": "2026-08-01",
+    "summary": "Fixture: denial of service vulnerability in left-pad npm package."
+  },
+  {
+    "feed_type": "github_advisory",
+    "title": "High severity bypass in humanoid robot authentication module",
+    "url": "https://github.com/advisories/GHSA-zzzz-eeee-ffff",
+    "published": "2026-06-20",
+    "summary": "Fixture: authentication bypass in humanoid robot control API allows unauthorized command injection."
+  },
+  {
+    "feed_type": "github_advisory",
+    "title": "Prototype pollution in robot operating system config loader",
+    "url": "https://github.com/advisories/GHSA-1111-2222-3333",
+    "published": "2026-05-15",
+    "summary": "Fixture: prototype pollution vulnerability in a robot operating system configuration module affects quadruped deployments."
+  }
+]
