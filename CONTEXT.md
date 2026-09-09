@@ -23,7 +23,7 @@ Chinese localization, liability/litigation category, vendor threat-board dashboa
 V2 scope unlocks when, 30 days after launch:
 
 1. Pipeline ran unattended ≥ 25 of 30 days.
-2. Incident registry holds ≥ 25 clustered incidents with manually-audited correct statuses.
+2. Incident registry holds ≥ 25 clustered incidents with audited correct statuses.
 3. Zero fabricated-status or unsourced-claim regressions in the audit.
 4. ≥ 1 unsolicited external share or citation.
 
@@ -38,7 +38,6 @@ V2 scope unlocks when, 30 days after launch:
 - **Rules gate** — deterministic keyword prefilter (robot terms AND incident terms) applied before any LLM spend.
 - **LLM pass** — classification, relevance score, category/vendor/class extraction, incident clustering + status proposal, and a 2–3 sentence buyer-facing summary, run on gate survivors only.
 - **Estimated band** — LLM-assigned qualitative severity (low/medium/high/critical) for Incidents without CVSS, shown as "estimated". Never a fabricated numeric score.
-- **Seed set** — the hand-curated launch backlog of 5–15 historical Incidents (flagship: Unitree BLE vulnerability), authored in the same JSON schema the pipeline emits, marked as human-curated in METHOD.
 - **METHOD page** — the about/methodology page documenting the pipeline, its failure modes, AI usage, and disclaimers ("not security or legal advice").
 
 ## Key decisions
@@ -46,6 +45,7 @@ V2 scope unlocks when, 30 days after launch:
 - ADR-0001: Incidents are entities; the site renders as a feed but statuses and patch lag survive dedup.
 - ADR-0002: Own Python pipeline (uv) on GitHub Actions daily cron; static JSON + vanilla HTML/CSS/JS on GitHub Pages; Horizon reused as modules, not forked.
 - ADR-0003: Strict claim hygiene for every status claim.
+- ADR-0004: Launch content is pipeline-derived only: the LLM-configured pipeline run produces the incident set; no manual curation layer.
 - Severity: CVSS verbatim where a CVE exists; otherwise Estimated band. Sort treats bands coarsely, ties broken by recency.
 - Sources (v1): Google News keyword RSS, security press (BleepingComputer, The Register, SecurityWeek, Ars Technica) + robotics press (IEEE Spectrum, The Robot Report, TechCrunch) RSS, Reddit (r/robotics, r/Robots, r/unitree) + Hacker News, NVD/CVE keyword feed + vendor advisories + GitHub advisories/PoC repos.
 - LLM: cheap fast tier (Haiku/Flash/mini-class) behind a swappable OpenAI-compatible config; provider is a config field.

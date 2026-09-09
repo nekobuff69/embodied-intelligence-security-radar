@@ -4,7 +4,6 @@ Covers:
 - Stale items (>3y old, malformed date) dismissed
 - Commentary/podcast items dismissed
 - Ineligible incidents (Unknown vendor, no CVE) demoted
-- Seed-protected incidents untouched
 - CVE-bearing incidents kept
 - dismiss_items detaches items and deletes emptied incidents
 - Blocklist persistence shape
@@ -89,25 +88,6 @@ def _registry_with(
     return reg
 
 
-def _make_seeds(_dir_ignored, item_urls: list[str]) -> Path:
-    """Create a minimal seed_incidents.json in a fresh temp dir.
-
-    Callers historically pass tmp_path or a date object as the first arg;
-    the seeds dir is tempfile-backed so either is harmless.
-    """
-    import tempfile
-
-    seeds_dir = Path(tempfile.mkdtemp()) / "seeds"
-    seeds_dir.mkdir(parents=True)
-    items = [
-        {"id": f"itm-seed-{i}", "url": url, "title": f"Seed item {i}", "body": "...", "published": "2025-01-01"}
-        for i, url in enumerate(item_urls)
-    ]
-    data = {"incidents": [{"id": "SEED-0001", "title": "Seed incident"}], "items": items}
-    (seeds_dir / "seed_incidents.json").write_text(json.dumps(data))
-    return seeds_dir
-
-
 # ═══════════════════════════════════════════════════════════════════
 # Stale items
 # ═══════════════════════════════════════════════════════════════════
@@ -127,9 +107,8 @@ class TestStaleItems:
         )
         inc = _incident(item_ids=[old_item.id])
         reg = _registry_with([inc], [old_item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["dismissed_items"] == 1
         assert "https://example.com/old" in summary["dismissed_urls"]
@@ -162,9 +141,8 @@ class TestStaleItems:
         )
         inc = _incident(item_ids=[item.id])
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["dismissed_items"] == 0
         assert len(reg.items) == 1
@@ -189,9 +167,8 @@ class TestCommentaryItems:
         )
         inc = _incident(item_ids=[item.id])
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["dismissed_items"] == 1
         assert "https://example.com/podcast" in summary["dismissed_urls"]
@@ -207,45 +184,10 @@ class TestCommentaryItems:
         )
         inc = _incident(item_ids=[item.id])
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["dismissed_items"] == 1
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Seed protection
-# ═══════════════════════════════════════════════════════════════════
-
-
-class TestSeedProtection:
-    """Incidents with seed-URL items are never touched."""
-
-    def test_seed_protected_unknown_vendor_kept(self):
-        """Seed-protected incident with Unknown vendor → NOT demoted."""
-        today = date(2026, 9, 9)
-        seed_url = "https://github.com/example/seed-advisory"
-        item = _item(
-            url=seed_url,
-            title="Seed advisory",
-            body="Security advisory for Unknown vendor robot",
-            published="2026-01-15",
-        )
-        inc = _incident(
-            inc_id="INC-1000",
-            vendor="Unknown",
-            model=None,
-            item_ids=[item.id],
-        )
-        reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [seed_url])
-
-        reg, summary = prune(reg, seeds_dir, today=today)
-
-        assert summary["demoted_incidents"] == 0
-        assert summary["kept_incidents"] == 1
-        assert any(i.id == "INC-1000" for i in reg.incidents)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -254,7 +196,7 @@ class TestSeedProtection:
 
 
 class TestIneligibleDemotion:
-    """Non-seed incidents with Unknown vendor and no CVE items → demoted."""
+    """Incidents with Unknown vendor and no CVE items → demoted."""
 
     def test_unknown_vendor_no_cve_demoted(self):
         """Unknown vendor, no CVE items → incident deleted, items kept."""
@@ -272,9 +214,8 @@ class TestIneligibleDemotion:
             item_ids=[item.id],
         )
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["demoted_incidents"] == 1
         assert summary["kept_incidents"] == 0
@@ -298,9 +239,8 @@ class TestIneligibleDemotion:
             item_ids=[item.id],
         )
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["demoted_incidents"] == 0
         assert summary["kept_incidents"] == 1
@@ -322,9 +262,8 @@ class TestIneligibleDemotion:
             item_ids=[item.id],
         )
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["demoted_incidents"] == 0
         assert summary["kept_incidents"] == 1
@@ -345,9 +284,8 @@ class TestIneligibleDemotion:
             item_ids=[item.id],
         )
         reg = _registry_with([inc], [item])
-        seeds_dir = _make_seeds(today, [])
 
-        reg, summary = prune(reg, seeds_dir, today=today)
+        reg, summary = prune(reg, today=today)
 
         assert summary["demoted_incidents"] == 1
         assert summary["kept_incidents"] == 0
@@ -463,9 +401,8 @@ class TestBlocklistPersistence:
         )
         inc = _incident(item_ids=[stale.id])
         reg = _registry_with([inc], [stale])
-        seeds_dir = _make_seeds(today, [])
 
-        _, summary = prune(reg, seeds_dir, today=today)
+        _, summary = prune(reg, today=today)
 
         assert isinstance(summary["dismissed_urls"], list)
         assert "https://example.com/stale" in summary["dismissed_urls"]

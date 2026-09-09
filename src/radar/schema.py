@@ -1,8 +1,8 @@
 """Item/Incident data contract for Robot Security Radar.
 
 This module is the single source of truth for the pipeline<->frontend
-contract. Every producer (fetchers, LLM pass, clusterer, seed loader)
-and every consumer (emitters, frontend) must go through these types.
+contract. Every producer (fetchers, LLM pass, clusterer) and every
+consumer (emitters, frontend) must go through these types.
 Claim-hygiene invariants (ADR-0003) are enforced here, not at the edges.
 """
 

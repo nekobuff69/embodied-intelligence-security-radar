@@ -28,6 +28,10 @@ jobs:
 
       - name: Run radar pipeline
         run: uv run radar run --site-dir site
+        env:
+          RADAR_LLM_API_KEY: ${{ secrets.RADAR_LLM_API_KEY }}
+          RADAR_LLM_BASE_URL: ${{ secrets.RADAR_LLM_BASE_URL || 'https://api.openai.com/v1' }}
+          RADAR_LLM_MODEL: ${{ secrets.RADAR_LLM_MODEL || 'gpt-4o-mini' }}
 
       - name: Commit registry
         run: |

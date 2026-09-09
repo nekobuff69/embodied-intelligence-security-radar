@@ -20,7 +20,7 @@ Pre-launch verification for Robot Security Radar. All items must be checked befo
 ## Editorial Sign-Off
 
 - [ ] METHOD page editorial sign-off recorded on [issue #12](https://github.com/saga3k/embodied-intelligence-security-radar/issues/12)
-- [ ] Seed-set editorial sign-off recorded on [issue #11](https://github.com/saga3k/embodied-intelligence-security-radar/issues/11)
+- [ ] LLM provider secrets configured (`RADAR_LLM_API_KEY`, `RADAR_LLM_BASE_URL`, `RADAR_LLM_MODEL`) and daily run verified with enrichment active
 
 ## Repository Visibility
 

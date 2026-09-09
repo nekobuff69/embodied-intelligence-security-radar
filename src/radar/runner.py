@@ -103,8 +103,8 @@ def run(
     llm_model = "skipped"
     llm_key = os.environ.get("RADAR_LLM_API_KEY", "")
     if llm_key:
-        base_url = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
-        model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+        base_url = os.environ.get("RADAR_LLM_BASE_URL") or "https://api.openai.com/v1"
+        model = os.environ.get("RADAR_LLM_MODEL") or "gpt-4o-mini"
         llm_provider = base_url
         llm_model = model
         enrich(gated_items, base_url, model, llm_key)
@@ -142,8 +142,8 @@ def run(
     # 4b. Cluster items into incidents (ADR-0001)
     cluster_llm: Callable | None = None
     if llm_key:
-        _base_url = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
-        _model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+        _base_url = os.environ.get("RADAR_LLM_BASE_URL") or "https://api.openai.com/v1"
+        _model = os.environ.get("RADAR_LLM_MODEL") or "gpt-4o-mini"
 
         def _cluster_llm(candidates: list[dict], item: Item) -> dict:
             """Wrap LLM call for the clusterer's stage-2 verdict."""
@@ -226,8 +226,8 @@ def run(
         hashes_path = data_dir / ".vendor_hashes.json"
         monitor_llm: Callable | None = None
         if llm_key:
-            _monitor_base = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
-            _monitor_model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+            _monitor_base = os.environ.get("RADAR_LLM_BASE_URL") or "https://api.openai.com/v1"
+            _monitor_model = os.environ.get("RADAR_LLM_MODEL") or "gpt-4o-mini"
 
             def _monitor_llm(page_text: str) -> dict:
                 payload = {

@@ -34,5 +34,5 @@ Registry + derived fields: `patch_lag_days` (client-recomputed), `open` bool, co
 
 - `schema.py` — contract; changes require updating this doc + fixtures.
 - Pipeline writes only `data/registry.json`; emitters write only `site/data/radar.json` + `site/feed.xml`.
-- Runner flags: `radar run --offline` (fixture mode, no network), `radar run` (live), `radar emit`, `radar load-seed`.
+- Runner flags: `radar run --offline` (fixture mode, no network), `radar run` (live), `radar emit`.
 - Workflows: `daily.yml` (cron: fetch→gate→apply→commit, then triggers deploy), `pages-deploy.yml` (emit + publish). No other workflow files.
