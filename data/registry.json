@@ -1,12 +1,93 @@
 {
+  "meta": {
+    "schema_version": 1,
+    "note": "SYNTHETIC fixture data for tests and offline mode. Not real intelligence."
+  },
   "incidents": [
     {
       "id": "INC-0001",
+      "title": "Vendor A quadruped BLE pairing bypass (fixture)",
+      "category": "vuln",
+      "robot_class": "quadruped",
+      "vendor": "Vendor A",
+      "severity": {
+        "source": "estimated",
+        "value": "high"
+      },
+      "status": {
+        "state": "unpatched",
+        "evidence_url": "https://example.com/advisory/vendor-a-ble",
+        "as_of": "2026-09-01",
+        "note": "No fix disclosed as of the as_of date; advisory last checked then."
+      },
+      "first_seen": "2024-08-15",
+      "last_checked": "2026-09-01",
+      "item_ids": [
+        "itm-fix00000001",
+        "itm-fix00000002",
+        "itm-fix00000003"
+      ],
+      "model": "Q-2 Pro",
+      "ai_summary": "Fixture summary: a Bluetooth pairing flaw lets nearby attackers pair without consent. No fix has been disclosed as of 2026-09-01. Verify with the linked sources.",
+      "monitor_urls": []
+    },
+    {
+      "id": "INC-0002",
+      "title": "Home robot camera stream hijacked in the wild (fixture)",
+      "category": "attack",
+      "robot_class": "consumer",
+      "vendor": "Vendor B",
+      "severity": {
+        "source": "estimated",
+        "value": "critical"
+      },
+      "status": {
+        "state": "exploited_in_wild",
+        "evidence_url": "https://example.com/news/vendor-b-hijack",
+        "as_of": "2026-08-20",
+        "note": ""
+      },
+      "first_seen": "2026-08-18",
+      "last_checked": "2026-08-20",
+      "item_ids": [
+        "itm-fix00000004",
+        "itm-fix00000005"
+      ],
+      "model": null,
+      "ai_summary": "Fixture summary: attackers took over a home robot's camera remotely. Exploitation confirmed in the wild as of 2026-08-20. Verify with the linked sources.",
+      "monitor_urls": []
+    },
+    {
+      "id": "INC-0003",
+      "title": "Demo humanoid trapped worker during expo malfunction (fixture)",
+      "category": "safety",
+      "robot_class": "humanoid",
+      "vendor": "Vendor C",
+      "severity": {
+        "source": "estimated",
+        "value": "medium"
+      },
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://example.com/news/expo-incident",
+        "as_of": "2026-07-02",
+        "note": ""
+      },
+      "first_seen": "2026-07-01",
+      "last_checked": "2026-07-02",
+      "item_ids": [
+        "itm-fix00000006"
+      ],
+      "model": "H-1",
+      "ai_summary": null,
+      "monitor_urls": []
+    },
+    {
+      "id": "INC-0004",
       "title": "Unitree BLE command injection allows full device takeover (UniPwn)",
       "category": "vuln",
       "robot_class": "quadruped",
       "vendor": "Unitree",
-      "model": "Go2/G1/H1/B2",
       "severity": {
         "source": "estimated",
         "value": "critical"
@@ -24,15 +105,16 @@
         "itm-ieee-unitree-exploit",
         "itm-arxiv-unitree-ai"
       ],
-      "ai_summary": "Researchers disclosed a wormable, pre-auth Bluetooth RCE chain affecting Unitree Go2, G1, H1, and B2 robots via hardcoded AES keys and unsanitized WiFi configuration commands. The attack achieves root shell within BLE range and can self-propagate to other nearby Unitree robots. No vendor patch has been released."
+      "model": "Go2/G1/H1/B2",
+      "ai_summary": "Researchers disclosed a wormable, pre-auth Bluetooth RCE chain affecting Unitree Go2, G1, H1, and B2 robots via hardcoded AES keys and unsanitized WiFi configuration commands. The attack achieves root shell within BLE range and can self-propagate to other nearby Unitree robots. No vendor patch has been released.",
+      "monitor_urls": []
     },
     {
-      "id": "INC-0002",
+      "id": "INC-0005",
       "title": "Ecovacs Deebot BLE hijacking and firmware vulnerabilities (CISA ICSA-25-135-19)",
       "category": "vuln",
       "robot_class": "consumer",
       "vendor": "Ecovacs",
-      "model": "Deebot 900/T20/X2/Airbot series",
       "severity": {
         "source": "estimated",
         "value": "critical"
@@ -52,15 +134,16 @@
         "itm-nvd-cve-2025-30199",
         "itm-nvd-cve-2025-30200"
       ],
-      "ai_summary": "Researchers Dennis Giese and Braelynn Luedtke demonstrated hijacking Ecovacs robot vacuums via Bluetooth from 130 meters, gaining access to cameras, microphones, and WiFi credentials. Initially, Ecovacs refused to patch. CISA later published an advisory covering multiple CVEs with firmware updates now available."
+      "model": "Deebot 900/T20/X2/Airbot series",
+      "ai_summary": "Researchers Dennis Giese and Braelynn Luedtke demonstrated hijacking Ecovacs robot vacuums via Bluetooth from 130 meters, gaining access to cameras, microphones, and WiFi credentials. Initially, Ecovacs refused to patch. CISA later published an advisory covering multiple CVEs with firmware updates now available.",
+      "monitor_urls": []
     },
     {
-      "id": "INC-0003",
+      "id": "INC-0006",
       "title": "Unitree H1 humanoid robot lunges at festival crowd in Tianjin",
       "category": "safety",
       "robot_class": "humanoid",
       "vendor": "Unitree",
-      "model": "H1",
       "severity": {
         "source": "estimated",
         "value": "medium"
@@ -78,15 +161,16 @@
         "itm-metro-unitree-attack",
         "itm-conversation-unitree"
       ],
-      "ai_summary": "A Unitree H1 humanoid robot lurched toward festival spectators in Tianjin, China, nearly striking a bystander before handlers intervened. The viral video raised questions about safety protocols for deploying humanoid robots in proximity to untrained crowds."
+      "model": "H1",
+      "ai_summary": "A Unitree H1 humanoid robot lurched toward festival spectators in Tianjin, China, nearly striking a bystander before handlers intervened. The viral video raised questions about safety protocols for deploying humanoid robots in proximity to untrained crowds.",
+      "monitor_urls": []
     },
     {
-      "id": "INC-0004",
+      "id": "INC-0007",
       "title": "Unitree H1 humanoid robot thrashes violently during factory crane test",
       "category": "safety",
       "robot_class": "humanoid",
       "vendor": "Unitree",
-      "model": "H1",
       "severity": {
         "source": "estimated",
         "value": "medium"
@@ -104,15 +188,16 @@
         "itm-techspot-unitree-berserk",
         "itm-ie-unitree-factory"
       ],
-      "ai_summary": "A Unitree H1 robot suspended from a crane during a factory test began thrashing violently, nearly injuring nearby workers and damaging equipment. The handler attributed the malfunction to a code error, highlighting the physical risks of humanoid robots during development testing."
+      "model": "H1",
+      "ai_summary": "A Unitree H1 robot suspended from a crane during a factory test began thrashing violently, nearly injuring nearby workers and damaging equipment. The handler attributed the malfunction to a code error, highlighting the physical risks of humanoid robots during development testing.",
+      "monitor_urls": []
     },
     {
-      "id": "INC-0006",
+      "id": "INC-0008",
       "title": "Unitree A1 quadruped BLE authentication bypass",
       "category": "vuln",
       "robot_class": "quadruped",
       "vendor": "Unitree",
-      "model": "A1",
       "severity": {
         "source": "estimated",
         "value": "high"
@@ -128,15 +213,16 @@
       "item_ids": [
         "itm-nvd-cve-2023-3103"
       ],
-      "ai_summary": "CVE-2023-3103 documents an authentication bypass by spoofing in the Unitree A1 quadruped robot's BLE interface. The vulnerability allows unauthorized access via Bluetooth. No public vendor advisory or patch confirmation has been found."
+      "model": "A1",
+      "ai_summary": "CVE-2023-3103 documents an authentication bypass by spoofing in the Unitree A1 quadruped robot's BLE interface. The vulnerability allows unauthorized access via Bluetooth. No public vendor advisory or patch confirmation has been found.",
+      "monitor_urls": []
     },
     {
-      "id": "INC-0007",
+      "id": "INC-0009",
       "title": "DJI Romo robot vacuum — MQTT access control flaw exposes 7,000 devices",
       "category": "vuln",
       "robot_class": "consumer",
       "vendor": "DJI",
-      "model": "Romo",
       "severity": {
         "source": "estimated",
         "value": "critical"
@@ -154,10 +240,108 @@
         "itm-tomshardware-dji-romo",
         "itm-petapixel-dji-romo"
       ],
-      "ai_summary": "A hobbyist attempting to connect a PS5 controller to their DJI Romo robot vacuum accidentally discovered that a single authenticated MQTT client could access over 7,000 DJI Romo devices, exposing live camera feeds and floor plans. DJI acknowledged the flaw and issued a bug bounty."
+      "model": "Romo",
+      "ai_summary": "A hobbyist attempting to connect a PS5 controller to their DJI Romo robot vacuum accidentally discovered that a single authenticated MQTT client could access over 7,000 DJI Romo devices, exposing live camera feeds and floor plans. DJI acknowledged the flaw and issued a bug bounty.",
+      "monitor_urls": []
     }
   ],
   "items": [
+    {
+      "id": "itm-fix00000001",
+      "source": "press_rss",
+      "url": "https://example.com/a/ble-disclosure",
+      "title": "Researchers disclose BLE pairing bypass in Vendor A quadruped",
+      "body": "Fixture body: researchers disclosed a Bluetooth pairing bypass affecting Vendor A Q-2 Pro units.",
+      "published": "2024-08-15",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
+    {
+      "id": "itm-fix00000002",
+      "source": "reddit",
+      "url": "https://example.com/r/robotics/ble-thread",
+      "title": "Vendor A BLE bug still not fixed one year later",
+      "body": "Fixture body: community thread notes the Vendor A BLE issue remains unpatched a year after disclosure.",
+      "published": "2025-08-20",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
+    {
+      "id": "itm-fix00000003",
+      "source": "vendor_page",
+      "url": "https://example.com/advisory/vendor-a-ble",
+      "title": "Vendor A security advisory page for BLE pairing",
+      "body": "Fixture body: advisory page, last reviewed 2026-09-01 with no fix listed.",
+      "published": "2026-09-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
+    {
+      "id": "itm-fix00000004",
+      "source": "google_news",
+      "url": "https://example.com/news/vendor-b-hijack",
+      "title": "Home robot camera stream hijacked, vendor confirms",
+      "body": "Fixture body: vendor confirms remote camera takeover in the wild.",
+      "published": "2026-08-18",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
+    {
+      "id": "itm-fix00000005",
+      "source": "press_rss",
+      "url": "https://example.com/a/vendor-b-followup",
+      "title": "Follow-up: hijacked home robot cameras used to spy",
+      "body": "Fixture body: follow-up reporting on the Vendor B hijack.",
+      "published": "2026-08-20",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
+    {
+      "id": "itm-fix00000006",
+      "source": "google_news",
+      "url": "https://example.com/news/expo-incident",
+      "title": "Demo humanoid malfunction traps worker at expo",
+      "body": "Fixture body: a humanoid demo unit malfunctioned and trapped a worker behind a barrier.",
+      "published": "2026-07-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
+    },
     {
       "id": "itm-unipwn-github",
       "source": "github_advisory",
@@ -171,7 +355,13 @@
         "CVE-2025-60250",
         "CVE-2025-60251"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-ieee-unitree-exploit",
@@ -181,7 +371,13 @@
       "body": "IEEE Spectrum coverage of the UniPwn exploit demonstrating fleet-wide takeover capability of Unitree robots through BLE command injection with wormable propagation.",
       "published": "2025-09-25",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-arxiv-unitree-ai",
@@ -191,7 +387,13 @@
       "body": "Research paper presenting a systematic security assessment of the Unitree G1 and broader Unitree product line, documenting the BLE command injection vulnerability and its implications for humanoid robot security.",
       "published": "2025-09-20",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-techcrunch-ecovacs-2024",
@@ -201,7 +403,13 @@
       "body": "Researchers Dennis Giese and Braelynn Luedtke presented at DEF CON 2024 demonstrating Bluetooth hijacking of Ecovacs robots from 130 meters, gaining access to cameras, microphones, and WiFi credentials. Ecovacs initially refused to fix the vulnerabilities.",
       "published": "2024-08-09",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-cisa-icsa-25-135-19",
@@ -215,7 +423,13 @@
         "CVE-2025-30199",
         "CVE-2025-30200"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-nvd-cve-2025-30198",
@@ -227,7 +441,13 @@
       "cve_ids": [
         "CVE-2025-30198"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-nvd-cve-2025-30199",
@@ -239,7 +459,13 @@
       "cve_ids": [
         "CVE-2025-30199"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-nvd-cve-2025-30200",
@@ -251,7 +477,13 @@
       "cve_ids": [
         "CVE-2025-30200"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-sciencealert-unitree-festival",
@@ -261,7 +493,13 @@
       "body": "Coverage of the Unitree H1 humanoid robot incident at a festival in Tianjin, China, where the robot lunged toward spectators before handlers intervened.",
       "published": "2025-02-28",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-metro-unitree-attack",
@@ -271,7 +509,13 @@
       "body": "Metro News report on the Unitree H1 humanoid robot incident at a Chinese festival where the robot appeared to attack festival attendees.",
       "published": "2025-02-26",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-conversation-unitree",
@@ -281,7 +525,13 @@
       "body": "Analysis of the Unitree H1 festival incident with recommendations for humanoid robot safety protocols in public settings.",
       "published": "2025-03-05",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-newatlas-unitree-factory",
@@ -291,7 +541,13 @@
       "body": "New Atlas coverage of the Unitree H1 factory test malfunction where the robot thrashed violently while suspended from a crane, nearly striking workers.",
       "published": "2025-05-08",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-techspot-unitree-berserk",
@@ -301,7 +557,13 @@
       "body": "TechSpot report on video showing a Unitree robot malfunctioning during a factory test, with the robot thrashing violently near workers.",
       "published": "2025-05-08",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-ie-unitree-factory",
@@ -311,7 +573,13 @@
       "body": "Interesting Engineering coverage of the Unitree H1 factory test incident showing the robot becoming uncontrolled during testing.",
       "published": "2025-05-08",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-nvd-cve-2023-3103",
@@ -323,7 +591,13 @@
       "cve_ids": [
         "CVE-2023-3103"
       ],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-verge-dji-romo",
@@ -333,7 +607,13 @@
       "body": "The Verge report on the DJI Romo robot vacuum MQTT vulnerability where a hobbyist accidentally accessed 7,000+ devices' cameras and floor plans while attempting to connect a PS5 controller.",
       "published": "2026-02-24",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-tomshardware-dji-romo",
@@ -343,7 +623,13 @@
       "body": "Tom's Hardware report on the DJI Romo vulnerability discovered by a hobbyist, exposing camera feeds and floor plans across thousands of devices.",
       "published": "2026-02-25",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     },
     {
       "id": "itm-petapixel-dji-romo",
@@ -353,7 +639,13 @@
       "body": "PetaPixel coverage of the DJI Romo MQTT vulnerability exposing live camera feeds from thousands of robot vacuums.",
       "published": "2026-02-24",
       "cve_ids": [],
-      "fetched_at": "2026-09-09"
+      "fetched_at": "2026-09-09",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null
     }
   ]
 }

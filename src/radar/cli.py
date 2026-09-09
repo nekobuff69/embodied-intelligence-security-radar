@@ -77,6 +77,70 @@ def _emit(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _override(args: argparse.Namespace) -> None:
+    from radar.overrides import (
+        detach_items,
+        merge_incidents,
+        save_atomic,
+        split_incident,
+    )
+    from radar.registry import load
+
+    registry_path = Path(args.registry) if args.registry else Path(_default_registry())
+
+    try:
+        reg = load(registry_path)
+
+        if args.op == "split":
+            keep_items = (
+                [s.strip() for s in args.items.split(",") if s.strip()]
+                if args.items
+                else []
+            )
+            reg, summary = split_incident(reg, args.incident, keep_items)
+
+        elif args.op == "merge":
+            if not args.with_id:
+                print("Error: merge requires --with <incident_id>", file=sys.stderr)
+                sys.exit(1)
+            reg, summary = merge_incidents(reg, args.incident, args.with_id)
+
+        elif args.op == "detach":
+            detach_ids = (
+                [s.strip() for s in args.items.split(",") if s.strip()]
+                if args.items
+                else []
+            )
+            if not detach_ids:
+                print("Error: detach requires --items <id1,id2,...>", file=sys.stderr)
+                sys.exit(1)
+            reg, summary = detach_items(reg, args.incident, detach_ids)
+
+        else:
+            print(f"Error: unknown operation {args.op!r}", file=sys.stderr)
+            sys.exit(1)
+
+        # Print summary
+        print(f"Operation: {summary['operation']}")
+        for key, value in summary.items():
+            if key == "operation":
+                continue
+            print(f"  {key}: {value}")
+
+        if args.dry_run:
+            print("\nDry run — no changes written.")
+        else:
+            save_atomic(reg, registry_path)
+            print(f"\nRegistry saved to {registry_path}")
+
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="radar",
@@ -104,6 +168,35 @@ def main() -> None:
     emit_parser.add_argument("--registry", default=None, help="Registry file path")
     emit_parser.add_argument("--site-dir", default="site", help="Site output directory")
     emit_parser.set_defaults(func=_emit, registry=None)
+
+    # radar override
+    override_parser = sub.add_parser(
+        "override",
+        help="Operator corrections: split, merge, detach incidents",
+    )
+    override_parser.add_argument(
+        "--op", required=True, choices=["split", "merge", "detach"],
+        help="Operation: split | merge | detach",
+    )
+    override_parser.add_argument(
+        "--incident", required=True, help="Target incident ID",
+    )
+    override_parser.add_argument(
+        "--with", dest="with_id", default=None,
+        help="Incident ID to merge INTO --incident (merge only)",
+    )
+    override_parser.add_argument(
+        "--items", default=None,
+        help="Comma-separated item IDs (split keep-set or detach list)",
+    )
+    override_parser.add_argument(
+        "--registry", default=None, help="Registry file path",
+    )
+    override_parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Print summary without writing",
+    )
+    override_parser.set_defaults(func=_override)
 
     args = parser.parse_args()
     if not args.command:

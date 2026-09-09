@@ -450,10 +450,10 @@ class TestStableIds:
 
         merged, summary = load_seeds(SEEDS_DIR, reg)
 
-        # All 7 seeds load (item URLs don't collide)
-        assert summary["loaded"] == 7, f"Expected 7 loaded, got {summary['loaded']}"
+        # All 6 seeds load (item URLs don't collide)
+        assert summary["loaded"] == 6, f"Expected 6 loaded, got {summary['loaded']}"
         # The collision-test incident is untouched
         assert any(inc.id == "INC-0001" and inc.title == "Collision test" for inc in merged.incidents)
-        # No seed kept INC-0001 — all 7 got remapped to INC-0002..INC-0008
+        # No seed kept INC-0001 — all 6 got remapped to INC-0002..INC-0007
         seed_ids = {inc.id for inc in merged.incidents if inc.title != "Collision test"}
-        assert seed_ids == {"INC-0002", "INC-0003", "INC-0004", "INC-0005", "INC-0006", "INC-0007", "INC-0008"}
+        assert seed_ids == {"INC-0002", "INC-0003", "INC-0004", "INC-0005", "INC-0006", "INC-0007"}
