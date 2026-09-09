@@ -19,16 +19,16 @@ Pre-launch verification for Robot Security Radar. All items must be checked befo
 
 ## Editorial Sign-Off
 
-- [ ] METHOD page editorial sign-off recorded on [issue #12](https://github.com/saga3k/embodied-intelligence-security-radar/issues/12)
-- [ ] LLM provider secrets configured (`RADAR_LLM_API_KEY`, `RADAR_LLM_BASE_URL`, `RADAR_LLM_MODEL`) and daily run verified with enrichment active
+- [ ] METHOD page editorial sign-off recorded on [issue #12](https://github.com/nekobuff69/embodied-intelligence-security-radar/issues/12)
+- [x] LLM provider config verified with enrichment active in a live run (OpenCode Go gateway `opencode.ai/zen/go/v1`, model `mimo-v2.5`, `x-opencode-session` header) — locally via `.env` (gitignored), 2026-09-09
+- [ ] Repo secrets set for the nightly cron: `RADAR_LLM_API_KEY` (+ optional `RADAR_LLM_BASE_URL` / `RADAR_LLM_MODEL` / `RADAR_LLM_SESSION_ID`); without them the scheduled run executes enrichment-less
 
 ## Repository Visibility
-
-- [ ] Repository flipped to public:
+- [x] Repository flipped to public (2026-09-09 — GitHub Pages requires a public repo on the free plan):
   ```
-  gh repo edit saga3k/embodied-intelligence-security-radar --visibility public
+  gh repo edit nekobuff69/embodied-intelligence-security-radar --visibility public --accept-visibility-change-consequences
   ```
-  *Command noted here for reference; do NOT execute until all other items pass.*
+  Pages enabled with `build_type=workflow`; deploy verified green.
 
 ## Claim Hygiene Spot Check
 

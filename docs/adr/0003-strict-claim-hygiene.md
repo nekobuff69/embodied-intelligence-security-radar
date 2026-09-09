@@ -17,7 +17,7 @@ The radar's signature output — "Vendor X product Y: unpatched for N days" — 
 3. **Patch lag is honest arithmetic.** Days from first disclosure to `last_checked`, with the caveat attached; never padded.
 4. **AI summaries are labeled AI-generated** with "verify with the linked source" adjacent. Snippets always link the source; the summary never replaces it.
 5. **Severity provenance is explicit.** CVSS verbatim where a CVE exists; otherwise an LLM-assigned qualitative band shown as "estimated". Never a fabricated numeric score.
-6. **METHOD page** documents the pipeline, its failure modes, AI usage, and a "not security or legal advice" disclaimer. Seed-set Incidents are marked human-curated.
+6. **METHOD page** documents the pipeline, its failure modes, AI usage, and a "not security or legal advice" disclaimer. *(Amendment 2026-09-09: the manual seed set was removed by ADR-0004; hygiene now rests on the LLM relevance verdict, the rules gate, and `radar prune`.)*
 
 Aggressive naming (badges/wall-of-shame framing without per-claim caveats) was rejected: maximum rhetorical force, unacceptable legal and reputational exposure.
 

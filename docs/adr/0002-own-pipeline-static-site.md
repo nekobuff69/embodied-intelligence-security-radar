@@ -12,7 +12,7 @@ Horizon (MIT) demonstrates the exact operating model: Python fetch pipeline → 
 
 ## Decision
 
-Build an own pipeline in Python (uv) that reuses Horizon's fetcher modules where useful (RSS, Reddit, Hacker News) but owns the pipeline stages and all output formats. Runs once daily via GitHub Actions cron. Pipeline writes `data/incidents.json`, `data/items.json` (both committed to the repo — git history is the audit trail), and `feed.xml`. The frontend is one hand-built vanilla HTML/CSS/JS page reading the JSON, hosted on GitHub Pages. No build toolchain, no server, no framework.
+Build an own pipeline in Python (uv) that reuses Horizon's fetcher modules where useful (RSS, Reddit, Hacker News) but owns the pipeline stages and all output formats. Runs once daily via GitHub Actions cron. Pipeline writes `data/registry.json` (committed to the repo — git history is the audit trail; *(amendment 2026-09-09: the originally planned `data/incidents.json` + `data/items.json` pair was consolidated into this single registry file)*) and `feed.xml`. The frontend is one hand-built vanilla HTML/CSS/JS page reading the JSON, hosted on GitHub Pages. No build toolchain, no server, no framework.
 
 ## Consequences
 
