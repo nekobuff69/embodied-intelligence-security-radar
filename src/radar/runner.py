@@ -180,13 +180,16 @@ def run(
                     {"role": "user", "content": user_msg},
                 ],
                 "temperature": 0.0,
-                "max_tokens": 256,
+                "max_tokens": 1024,
             }
             try:
                 headers = {
                     "Authorization": f"Bearer {llm_key}",
                     "Content-Type": "application/json",
                 }
+                session_id = os.environ.get("RADAR_LLM_SESSION_ID") or ""
+                if session_id:
+                    headers["x-opencode-session"] = session_id
                 with httpx.Client() as client:
                     resp = client.post(
                         f"{_base_url}/chat/completions",
@@ -245,13 +248,16 @@ def run(
                         {"role": "user", "content": page_text[:2000]},
                     ],
                     "temperature": 0.0,
-                    "max_tokens": 256,
+                    "max_tokens": 1024,
                 }
                 try:
                     headers = {
                         "Authorization": f"Bearer {llm_key}",
                         "Content-Type": "application/json",
                     }
+                    session_id = os.environ.get("RADAR_LLM_SESSION_ID") or ""
+                    if session_id:
+                        headers["x-opencode-session"] = session_id
                     with httpx.Client() as client:
                         resp = client.post(
                             f"{_monitor_base}/chat/completions",

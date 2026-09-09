@@ -32,13 +32,17 @@ jobs:
           RADAR_LLM_API_KEY: ${{ secrets.RADAR_LLM_API_KEY }}
           RADAR_LLM_BASE_URL: ${{ secrets.RADAR_LLM_BASE_URL || 'https://api.openai.com/v1' }}
           RADAR_LLM_MODEL: ${{ secrets.RADAR_LLM_MODEL || 'gpt-4o-mini' }}
+          RADAR_LLM_SESSION_ID: ${{ secrets.RADAR_LLM_SESSION_ID || github.run_id }}
+
+      - name: Prune registry
+        run: uv run radar prune || true
 
       - name: Commit registry
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A data/
           git add data/registry.json
-          if ! git diff --quiet --cached data/registry.json; then
+          if ! git diff --quiet --cached; then
             git commit -m "chore(data): daily radar run"
             git push
           fi

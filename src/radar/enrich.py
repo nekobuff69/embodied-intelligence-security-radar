@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable
@@ -192,7 +193,7 @@ def _build_payload(item: Item, model: str) -> dict[str, Any]:
             {"role": "user", "content": f"Title: {item.title}\nBody: {item.body}"},
         ],
         "temperature": 0.2,
-        "max_tokens": 512,
+        "max_tokens": 1500,
     }
 
 
@@ -213,6 +214,9 @@ def _enrich_one(
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             }
+            session_id = os.environ.get("RADAR_LLM_SESSION_ID") or ""
+            if session_id:
+                headers["x-opencode-session"] = session_id
             with httpx.Client() as client:
                 http_resp = client.post(
                     f"{base_url}/chat/completions",

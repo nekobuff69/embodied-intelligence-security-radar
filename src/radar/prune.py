@@ -78,12 +78,14 @@ def prune(
         if _is_stale(item.published, today):
             urls_to_dismiss.add(item.url)
 
-    # Commentary items
+    # Commentary items — keyword heuristics plus the LLM relevance verdict:
+    # ai_relevant False means the model screened it out (podcast, opinion,
+    # hype) and the product decision is to dismiss such items entirely.
     for item in reg.items:
         if item.url in urls_to_dismiss:
             continue
         text = f"{item.title} {item.body}"
-        if _has_commentary(text):
+        if _has_commentary(text) or item.ai_relevant is False:
             urls_to_dismiss.add(item.url)
 
     # Dismiss items from registry

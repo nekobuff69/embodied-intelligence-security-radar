@@ -68,6 +68,9 @@ def emit(registry: Registry, site_dir: str | Path, site_url: str = "") -> None:
 
     wire = [item for item in registry.items if item.id not in attached_ids]
 
+    import json
+    from dataclasses import asdict
+
     radar = {
         "meta": {
             "schema_version": registry.meta.get("schema_version", 1),
@@ -75,8 +78,12 @@ def emit(registry: Registry, site_dir: str | Path, site_url: str = "") -> None:
             "counts": counts,
         },
         "incidents": incidents_out,
-        "items": [item.__dict__ for item in registry.items],
-        "wire": [item.__dict__ for item in wire],
+        "items": [asdict(item) for item in registry.items],
+        "wire": [
+            asdict(item)
+            for item in registry.items
+            if item.id not in attached_ids
+        ],
     }
 
     import json
