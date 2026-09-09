@@ -18,6 +18,7 @@ from radar.emitters import emit
 from radar.enrich import enrich
 from radar.fetchers import fetch
 from radar.gate import apply_gate
+from radar.monitor import monitor
 from radar.registry import apply_items, load, save
 from radar.schema import Item, Registry, item_id_for_url
 
@@ -203,10 +204,68 @@ def run(
         1 for d in cluster_decisions if "status_proposal" in d
     )
 
-    # 5. Save
+    # 5. Vendor-page monitor (live mode only — offline skips network)
+    monitor_summary: dict = {"checked": 0, "unchanged": 0, "changed": 0, "interpreted": 0}
+    if not offline:
+        config = _load_config()
+        data_dir = Path(__file__).resolve().parents[2] / "data"
+        hashes_path = data_dir / ".vendor_hashes.json"
+        monitor_llm: Callable | None = None
+        if llm_key:
+            _monitor_base = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
+            _monitor_model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+
+            def _monitor_llm(page_text: str) -> dict:
+                payload = {
+                    "model": _monitor_model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a security advisory monitor. Analyze the "
+                                "following page content and determine if a fix/patch "
+                                "has been disclosed. Return STRICT JSON: "
+                                '{"patched": bool, "note": "brief explanation"}'
+                            ),
+                        },
+                        {"role": "user", "content": page_text[:2000]},
+                    ],
+                    "temperature": 0.0,
+                    "max_tokens": 256,
+                }
+                try:
+                    headers = {
+                        "Authorization": f"Bearer {llm_key}",
+                        "Content-Type": "application/json",
+                    }
+                    with httpx.Client() as client:
+                        resp = client.post(
+                            f"{_monitor_base}/chat/completions",
+                            json=payload,
+                            headers=headers,
+                            timeout=30.0,
+                        )
+                        resp.raise_for_status()
+                        content = resp.json()["choices"][0]["message"]["content"]
+                    cleaned = content.strip()
+                    if cleaned.startswith("```"):
+                        import re as _re
+                        cleaned = _re.sub(r"^```\w*\s*\n?", "", cleaned)
+                        cleaned = _re.sub(r"\n?```\s*$", "", cleaned)
+                        cleaned = cleaned.strip()
+                    import json as _json
+                    return _json.loads(cleaned)
+                except Exception as exc:
+                    log.warning("Monitor LLM call failed: %s", exc)
+                    return {}
+
+            monitor_llm = _monitor_llm
+        monitor_summary = monitor(reg, config, hashes_path, llm=monitor_llm)
+
+    # 6. Save
     save(reg, registry_path)
 
-    # 6. Emit
+    # 7. Emit
     emit(reg, site_dir)
 
     summary = {
@@ -219,6 +278,7 @@ def run(
         "status_changed": status_changed,
         "llm_provider": llm_provider,
         "llm_model": llm_model,
+        **{f"monitor_{k}": v for k, v in monitor_summary.items()},
     }
     log.info("Pipeline complete: %s", summary)
     return summary

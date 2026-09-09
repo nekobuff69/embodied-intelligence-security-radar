@@ -128,11 +128,41 @@ def _propose_status(text: str, evidence_url: str, as_of: str) -> dict | None:
 # ── Main clustering pipeline ─────────────────────────────────────────
 
 
+def candidate_index(
+    reg: Registry,
+    today: str | None = None,
+    reopen_window_days: int = 60,
+) -> dict[str, Incident]:
+    """Return open + reopen-window Incidents that participate in clustering.
+
+    Candidate set = Incidents whose status.state is open
+    (disclosed / unpatched / exploited_in_wild) **or** whose status.as_of
+    is within *reopen_window_days* of *today* (patch-bypass coverage).
+
+    A fully-closed Incident whose as_of is older than the window is excluded.
+    """
+    if today is None:
+        today = date.today().isoformat()
+    open_states = {"disclosed", "unpatched", "exploited_in_wild"}
+    try:
+        cutoff = (date.fromisoformat(today) - timedelta(days=reopen_window_days)).isoformat()
+    except (ValueError, TypeError):
+        cutoff = "0000-01-01"
+    result: dict[str, Incident] = {}
+    for inc in reg.incidents:
+        is_open = inc.status.state in open_states
+        is_reopen_window = inc.status.as_of >= cutoff
+        if is_open or is_reopen_window:
+            result[inc.id] = inc
+    return result
+
+
 def cluster(
     reg: Registry,
     items: list[Item],
     embedder: Callable[[str], list[float]] | None = None,
     llm: Callable[[list[dict], Item], dict] | None = None,
+    vector_memo: dict[str, list[float]] | None = None,
 ) -> tuple[Registry, list[dict]]:
     """Cluster *items* into *reg* incidents.
 
@@ -141,6 +171,11 @@ def cluster(
       stage 1  embedding cosine top-3 over open + reopen-window incidents
       stage 2  optional LLM verdict (only when stage 0 missed and stage 1
                found candidates; ``llm=None`` → skipped)
+
+    *vector_memo*: optional per-run dict keyed by incident id, caching
+    precomputed vectors.  Passed in from a prior call (or empty dict on
+    first call) so that repeated runs over an unchanged registry re-embed
+    nothing (silence is free).  The memo is mutated in-place.
 
     Deterministic keyword phrases in item text produce evidence-carrying
     status proposals (ADR-0003).  Only ``patched`` and ``exploited_in_wild``
@@ -157,32 +192,33 @@ def cluster(
 
     # ── Build candidate index ────────────────────────────────────────
 
-    open_states = {"disclosed", "unpatched", "exploited_in_wild"}
-    reopen_cutoff = date.today() - timedelta(days=60)
-
-    candidate_index: dict[str, dict] = {}
+    cand_incidents = candidate_index(reg, today)
+    candidate_index_meta: dict[str, dict] = {}
     candidate_embeddings: dict[str, list[float]] = {}
 
-    for inc in reg.incidents:
-        is_open = inc.status.state in open_states
-        try:
-            status_date = date.fromisoformat(inc.status.as_of)
-        except (ValueError, TypeError):
-            status_date = date.min
-        is_reopen_window = status_date >= reopen_cutoff
+    if vector_memo is None:
+        vector_memo = {}
+    query_vecs: dict[str, list[float]] = {}
+    candidate_index_meta: dict = {}
+    candidate_embeddings: dict = {}
 
-        if is_open or is_reopen_window:
-            candidate_index[inc.id] = {
-                "id": inc.id,
-                "title": inc.title,
-                "vendor": inc.vendor,
-                "model": inc.model,
-                "status": inc.status.state,
-                "first_seen": inc.first_seen,
-            }
-            if embedder is not None:
-                text = f"{inc.title} {inc.vendor} {inc.model or ''}"
-                candidate_embeddings[inc.id] = embedder(text)
+    for inc_id, inc in cand_incidents.items():
+        candidate_index_meta[inc.id] = {
+            "id": inc.id,
+            "title": inc.title,
+            "vendor": inc.vendor,
+            "model": inc.model,
+            "status": inc.status.state,
+            "first_seen": inc.first_seen,
+        }
+        # Reuse cached vector or compute once per run
+        if inc.id in vector_memo:
+            candidate_embeddings[inc.id] = vector_memo[inc.id]
+        elif embedder is not None:
+            text = f"{inc.title} {inc.vendor} {inc.model or ''}"
+            vec = embedder(text)
+            vector_memo[inc.id] = vec
+            candidate_embeddings[inc.id] = vec
 
     # ── Process each item ────────────────────────────────────────────
 
@@ -229,12 +265,13 @@ def cluster(
         if matched_inc is None and embedder is not None and candidate_embeddings:
             query_text = f"{item.title} {item.body}"
             query_emb = embedder(query_text)
+            query_vecs[item.id] = query_emb
             top = _top_k_candidates(query_emb, candidate_embeddings)
 
             if top and llm is not None:
                 candidate_blubs = []
                 for cid, _score in top:
-                    cand = candidate_index[cid]
+                    cand = candidate_index_meta[cid]
                     candidate_blubs.append(
                         {
                             "id": cand["id"],
@@ -318,6 +355,10 @@ def cluster(
                 item_ids=[item.id],
             )
             reg.incidents.append(inc)
+            # The new incident's vector is the item's query vector — store it
+            # so later runs in the same memo never re-embed this incident.
+            if item.id in query_vecs:
+                vector_memo[inc_id] = query_vecs[item.id]
             decisions.append({"action": "create", "incident_id": inc_id})
 
     return reg, decisions

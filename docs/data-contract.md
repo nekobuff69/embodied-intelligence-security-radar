@@ -12,7 +12,7 @@ items:   [{id, source, url, title, body, published, cve_ids?, fetched_at}]
          lifted into Incidents by the clusterer): ai_summary?, ai_category?,
          ai_vendor?, ai_model?, ai_robot_class?, ai_severity?
 incidents: [{id, title, category, robot_class, vendor, model?, severity, status,
-             first_seen, last_checked, item_ids, ai_summary?}]
+             first_seen, last_checked, item_ids, ai_summary?, monitor_urls?}]
          category ∈ vuln|attack|safety ; robot_class ∈ humanoid|quadruped|consumer
          severity: {source: cvss|estimated, value: "8.1" | low|medium|high|critical}
          status:   {state: disclosed|unpatched|patched|exploited_in_wild|resolved,

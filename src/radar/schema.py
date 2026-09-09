@@ -113,6 +113,7 @@ class Incident:
     item_ids: list[str] = field(default_factory=list)
     model: str | None = None
     ai_summary: str | None = None
+    monitor_urls: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         _require(self.category in CATEGORIES, f"category {self.category!r} not in {sorted(CATEGORIES)}")
@@ -164,6 +165,7 @@ class Registry:
                 severity=Severity(**i["severity"]), status=Status(**i["status"]),
                 first_seen=i["first_seen"], last_checked=i["last_checked"],
                 item_ids=list(i["item_ids"]), ai_summary=i.get("ai_summary"),
+                monitor_urls=list(i.get("monitor_urls", [])),
             )
             for i in raw.get("incidents", [])
         ]

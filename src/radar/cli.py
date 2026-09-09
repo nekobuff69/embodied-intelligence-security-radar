@@ -2,6 +2,7 @@
 
 Usage:
     radar run [--offline] [--registry PATH] [--raw-dir PATH] [--site-dir PATH]
+    radar load-seed [--seeds DIR] [--registry PATH] [--dry-run]
     radar emit [--registry PATH] [--site-dir PATH]
 """
 
@@ -28,6 +29,36 @@ def _run(args: argparse.Namespace) -> None:
             site_dir=Path(args.site_dir),
         )
         print(f"Done: fetched={summary['fetched']}, gated={summary['gated']}, added={summary['added']}")
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _load_seed(args: argparse.Namespace) -> None:
+    from pathlib import Path as _Path
+
+    from radar.seed_loader import load_seeds
+    from radar.registry import load, save
+
+    seeds_dir = _Path(args.seeds) if args.seeds else _Path("data/seeds")
+    registry_path = _Path(args.registry) if args.registry else _Path(_default_registry())
+
+    try:
+        reg = load(registry_path)
+        merged, summary = load_seeds(seeds_dir, reg, dry_run=args.dry_run)
+
+        print(f"Loaded: {summary['loaded']}, Skipped: {summary['skipped']}, Rejected: {summary['rejected']}")
+        if summary["rejected_details"]:
+            print("\nRejected incidents:")
+            for detail in summary["rejected_details"]:
+                print(f"  - {detail['id']}: {detail['title']}")
+                print(f"    Reason: {detail['reason']}")
+
+        if not args.dry_run:
+            save(merged, registry_path)
+            print(f"\nRegistry saved to {registry_path}")
+        else:
+            print("\nDry run — no changes written.")
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -60,6 +91,13 @@ def main() -> None:
     run_parser.add_argument("--raw-dir", default=None, help="Raw fixture directory (offline mode)")
     run_parser.add_argument("--site-dir", default="site", help="Site output directory")
     run_parser.set_defaults(func=_run, registry=None)
+
+    # radar load-seed
+    seed_parser = sub.add_parser("load-seed", help="Load hand-curated seed incidents into the registry")
+    seed_parser.add_argument("--seeds", default=None, help="Seeds directory (default: data/seeds)")
+    seed_parser.add_argument("--registry", default=None, help="Registry file path")
+    seed_parser.add_argument("--dry-run", action="store_true", help="Validate only, print what would load/reject")
+    seed_parser.set_defaults(func=_load_seed)
 
     # radar emit
     emit_parser = sub.add_parser("emit", help="Emit site files from existing registry")

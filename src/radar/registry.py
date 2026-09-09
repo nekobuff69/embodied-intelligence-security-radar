@@ -113,3 +113,18 @@ def attach_item(inc: Incident, item: Item) -> None:
     """
     if item.id not in inc.item_ids:
         inc.item_ids.append(item.id)
+
+
+def touch_last_checked(reg: Registry, incident_id: str, today: str) -> bool:
+    """Advance an Incident's last_checked to *today*.
+
+    Returns True if the value actually changed; False if already current.
+    No-op (returns False) if incident_id not found.
+    """
+    for inc in reg.incidents:
+        if inc.id == incident_id:
+            if inc.last_checked != today:
+                inc.last_checked = today
+                return True
+            return False
+    return False

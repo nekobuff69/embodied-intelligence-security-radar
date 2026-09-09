@@ -5,6 +5,131 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Method — Robot Security Radar</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Method page scoped prose ──────────────────────────────── */
+    .method-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+
+    .method-section h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-green);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .method-section p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+
+    .method-section p:last-child {
+      margin-bottom: 0;
+    }
+
+    .method-section ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 14px;
+    }
+
+    .method-section li {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 13px;
+      padding: 4px 0 4px 16px;
+      position: relative;
+    }
+
+    .method-section li::before {
+      content: "\25B8";
+      position: absolute;
+      left: 0;
+      color: var(--accent-green-dim);
+    }
+
+    .method-section code {
+      font-family: inherit;
+      font-size: 12px;
+      background: rgba(248, 250, 252, 0.06);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: var(--accent-amber);
+    }
+
+    .method-section .label-tag {
+      display: inline-block;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-amber);
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.1);
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .method-section .caveat {
+      background: rgba(245, 158, 11, 0.06);
+      border-left: 3px solid var(--accent-amber);
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 12px;
+      color: var(--accent-amber);
+      line-height: 1.6;
+    }
+
+    .method-section .pipeline-step {
+      background: rgba(34, 197, 94, 0.04);
+      border-left: 3px solid var(--accent-green-dim);
+      padding: 10px 16px;
+      margin: 10px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .method-section .pipeline-step strong {
+      color: var(--text-primary);
+    }
+
+    .method-section .source-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+    }
+
+    @media (max-width: 768px) {
+      .method-section .source-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .method-footer {
+      margin-top: 8px;
+      padding: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .method-footer a {
+      color: var(--accent-green-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+  </style>
 </head>
 <body>
   <header class="header">
@@ -21,12 +146,301 @@
   <section class="detail-section">
     <div class="detail-view">
       <h2 class="detail-title">Method</h2>
-      <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px;">
-        Pipeline documentation forthcoming.
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 32px; text-transform: uppercase; letter-spacing: 0.1em;">
+        How the radar works, what the AI does, and how to read what it says.
       </p>
-      <p style="font-size: 12px; color: var(--accent-amber);">
-        This information is provided for awareness purposes only. It does not constitute security or legal advice.
-      </p>
+
+      <!-- What This Is -->
+      <div class="method-section">
+        <h3>What This Is</h3>
+        <p>
+          Robot Security Radar is a public-awareness news aggregator for security incidents
+          involving embodied-intelligence products&mdash;humanoids, quadrupeds, and
+          consumer/service robots. The thesis: mass adoption is outrunning liability, and
+          buyers are uninformed about security and accountability risk.
+        </p>
+        <p>
+          The radar finds notable intelligence from open-access sources and presents it
+          <strong style="color: var(--text-primary);">buyer-first</strong>:
+          "what this means if you own or plan to buy one." Security researchers and
+          journalists are secondary audiences; technical detail (CVE IDs, source links)
+          is a metadata layer, never the headline.
+        </p>
+        <p>
+          This is <em>not</em> a vulnerability scanner, pen-test tool, or vendor report card.
+          It is a curated feed of publicly reported incidents with honest caveats attached
+          to every claim.
+        </p>
+      </div>
+
+      <!-- How the Radar Works -->
+      <div class="method-section">
+        <h3>How the Radar Works</h3>
+        <p>
+          The pipeline runs once daily via a scheduled GitHub Actions cron job.
+          Here is what happens, step by step:
+        </p>
+
+        <div class="pipeline-step">
+          <strong>1. Fetch</strong> &mdash; Source fetchers pull from open-access feeds:
+          Google News keyword RSS, security press RSS (BleepingComputer, The Register,
+          SecurityWeek, Ars Technica), robotics press RSS (IEEE Spectrum, The Robot Report,
+          TechCrunch), Reddit (<code>r/robotics</code>, <code>r/Robots</code>,
+          <code>r/unitree</code>), Hacker News, NVD/CVE keyword feed, GitHub
+          advisories/PoC repos, and vendor advisory page monitors.
+        </div>
+
+        <div class="pipeline-step">
+          <strong>2. Rules Gate</strong> &mdash; A deterministic keyword prefilter runs
+          before any LLM spend. Articles must match <em>both</em> a robot term (e.g.
+          humanoid, quadruped, Unitree, Optimus, Figure) <em>and</em> an incident term
+          (e.g. vulnerability, exploit, breach, safety incident). Drones, UAVs, autonomous
+          vehicles, and industrial arms/cobots are excluded&mdash;mature coverage exists
+          elsewhere, and excluding them keeps the adoption-gap thesis sharp.
+        </div>
+
+        <div class="pipeline-step">
+          <strong>3. LLM Pass</strong> &mdash; Only articles that survive the rules gate
+          reach the LLM. A cheap-tier model (Haiku/Flash/mini-class; provider is a
+          swappable config field) assigns: relevance score, category (vulnerability /
+          attack / safety), vendor, model, robot class, severity (CVSS verbatim where a
+          CVE exists, or an estimated qualitative band), and a 2&ndash;3 sentence
+          buyer-facing summary. The LLM also proposes incident clustering: matching the
+          new article against the existing registry of known incidents.
+        </div>
+
+        <div class="pipeline-step">
+          <strong>4. Clustering</strong> &mdash; Incident matching happens in three stages
+          to control cost: (a) exact key join&mdash;CVE ID or vendor+model+date match
+          costs zero tokens; (b) embedding similarity&mdash;top candidates selected via
+          cheap vector math; (c) LLM verdict&mdash;the model sees only the new article
+          plus the top candidates and decides: attach to existing incident or create new.
+          Prompt size per article stays constant regardless of registry size.
+        </div>
+
+        <div class="pipeline-step">
+          <strong>5. Registry</strong> &mdash; Results are written to a JSON registry file
+          that is committed to the repository. Git history <em>is</em> the audit trail.
+          Only open incidents plus recently closed ones participate in clustering; fully
+          closed incidents leave the candidate index after a reopen window.
+        </div>
+
+        <div class="pipeline-step">
+          <strong>6. Static Site + RSS</strong> &mdash; The registry is served as a
+          vanilla HTML/CSS/JS site on GitHub Pages&mdash;no build toolchain, no server,
+          no framework. An <code>feed.xml</code> (RSS) is also emitted for subscription.
+          Patch lag and hero counters are computed client-side so the static data stays
+          fresh between daily runs.
+        </div>
+      </div>
+
+      <!-- What the AI Does and Does Not Do -->
+      <div class="method-section">
+        <h3>What the AI Does and Does Not Do</h3>
+        <p>
+          <span class="label-tag">AI-Generated</span> Summaries on incident cards are
+          produced by a language model. They are labeled as such on every card where they
+          appear. The summary is a convenience, not a substitute for reading the source.
+          Always verify with the linked source.
+        </p>
+        <p>
+          The LLM handles: classification (is this relevant? which category?), entity
+          extraction (vendor, model, robot class), severity assessment, incident clustering
+          (does this belong to a known incident?), and the 2&ndash;3 sentence buyer
+          summary.
+        </p>
+        <p>
+          The LLM does <strong style="color: var(--text-primary);">not</strong>: fabricate
+          severity numbers, invent incidents, change statuses without a linked dated source,
+          or replace editorial judgment. Status changes require a linked, dated evidence
+          source&mdash;the pipeline enforces this in schema.
+        </p>
+
+        <div class="caveat">
+          <strong>Severity:</strong> Where a CVE exists, the radar displays the CVSS score
+          verbatim. Where no CVE is assigned, the LLM provides a qualitative band
+          (low / medium / high / critical) shown as <em>"estimated."</em> The radar never
+          fabricates a numeric score for an incident without a CVE. Severity sorts treat
+          bands coarsely; ties break by recency.
+        </div>
+
+        <p>
+          The seed set&mdash;the hand-curated launch backlog of 5&ndash;15 historical
+          incidents&mdash;is authored by humans in the same JSON schema the pipeline emits.
+          It is marked <span class="label-tag">Human-Curated</span> and pending
+          editorial review before launch.
+        </p>
+      </div>
+
+      <!-- How to Read an Incident -->
+      <div class="method-section">
+        <h3>How to Read an Incident</h3>
+        <p>
+          Every incident card shows a status, a severity, and (when applicable) a patch
+          lag. Here is what each means:
+        </p>
+
+        <ul>
+          <li>
+            <strong style="color: var(--text-primary);">Disclosed</strong> &mdash;
+            The vulnerability or incident has been publicly reported but no assessment
+            of patch status has been made yet. An evidence link and <code>as_of</code>
+            date accompany the status.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Unpatched</strong> &mdash;
+            No fix has been publicly disclosed as of the <code>as_of</code> date.
+            This is an <em>absence-of-evidence</em> claim: the vendor may have fixed
+            the issue silently, and the radar may lag behind. The card carries a caveat
+            stating this explicitly.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Patched</strong> &mdash;
+            A fix or mitigation has been publicly disclosed, linked and dated.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Exploited in the Wild</strong>
+            &mdash; Active exploitation has been reported with evidence.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Resolved</strong> &mdash;
+            The incident has been fully addressed (fix confirmed, or incident
+            concluded).
+          </li>
+        </ul>
+
+        <p>
+          <strong style="color: var(--text-primary);">Patch lag</strong> is the number
+          of days from the first public disclosure of an incident to the radar's most
+          recent check, counting only days where no fix was publicly disclosed. It is
+          computed client-side from <code>first_seen</code> and <code>last_checked</code>
+          so static data stays fresh between daily pipeline runs. The caveat is always
+          attached: this is how long the radar has not found evidence of a fix&mdash;not
+          necessarily how long the vendor has left the issue open.
+        </p>
+
+        <div class="caveat">
+          <strong>Absence of evidence is not proof of patchedness.</strong> A vendor may
+          release a fix that the radar has not yet detected, or may address the issue
+          through channels not monitored by the radar's sources. Always check the
+          vendor's own advisory pages for the most current status.
+        </div>
+      </div>
+
+      <!-- Data Sources -->
+      <div class="method-section">
+        <h3>Data Sources</h3>
+        <p>
+          All data comes from open-access, publicly available sources. The radar
+          monitors:
+        </p>
+        <ul class="source-list">
+          <li>Google News keyword RSS</li>
+          <li>BleepingComputer (press RSS)</li>
+          <li>The Register (press RSS)</li>
+          <li>SecurityWeek (press RSS)</li>
+          <li>Ars Technica (press RSS)</li>
+          <li>IEEE Spectrum Robotics (press RSS)</li>
+          <li>The Robot Report (press RSS)</li>
+          <li>TechCrunch Robotics (press RSS)</li>
+          <li>Reddit: r/robotics, r/Robots, r/unitree</li>
+          <li>Hacker News</li>
+          <li>NVD/CVE keyword feed</li>
+          <li>GitHub advisories &amp; PoC repos</li>
+          <li>Vendor advisory pages (monitored)</li>
+        </ul>
+        <p>
+          The radar does <em>not</em> monitor private vulnerability disclosure
+          channels, vendor-internal systems, or paywalled content.
+        </p>
+      </div>
+
+      <!-- Limitations & Failure Modes -->
+      <div class="method-section">
+        <h3>Limitations &amp; Failure Modes</h3>
+        <p>
+          The radar is a best-effort awareness tool with known blind spots.
+          Understanding these is essential to using the radar responsibly:
+        </p>
+        <ul>
+          <li>
+            <strong style="color: var(--text-primary);">Keyword gate misses.</strong>
+            The rules gate uses deterministic keyword matching. Cleverly worded coverage
+            that avoids both robot terms and incident terms in the same article will
+            slip through undetected.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">LLM summary errors.</strong>
+            AI-generated summaries can be wrong. They are produced by a language model
+            and should be treated as a convenience, not ground truth. Always verify
+            against the linked source.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Clustering mis-attachment.</strong>
+            The incident clustering logic can occasionally attach an article to the wrong
+            incident, or create a duplicate incident. Operator correction tooling exists;
+            report issues on the project tracker.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Absence-of-evidence lag.</strong>
+            The radar may not detect a vendor fix released through unmonitored channels.
+            "Unpatched" means "no fix found as of [date]," not "definitely unfixed."
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Feed drift.</strong>
+            Source feeds change URLs, formats, or shutdown without notice. These surface
+            as failed pipeline runs visible in the Actions log. The pipeline is designed
+            to degrade gracefully: a single source failure does not block the rest.
+          </li>
+          <li>
+            <strong style="color: var(--text-primary);">Scope exclusions.</strong>
+            Drones, UAVs, autonomous vehicles, and industrial arms/cobots are excluded
+            from v1. This is intentional: mature coverage exists elsewhere, and the
+            radar focuses on the adoption-gap thesis for embodied-intelligence products.
+          </li>
+        </ul>
+      </div>
+
+      <!-- Corrections -->
+      <div class="method-section">
+        <h3>Corrections</h3>
+        <p>
+          Found an error? The registry and pipeline are open-source. Report incorrect
+          incident attachments, factual errors, or missing sources via the
+          <a href="https://github.com/saga3k/embodied-intelligence-security-radar/issues"
+             style="color: var(--accent-green);">project issue tracker</a>.
+          Corrections are applied to the registry and committed; git history preserves
+          the full audit trail.
+        </p>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="method-section">
+        <h3>Disclaimer</h3>
+        <p>
+          Robot Security Radar is an awareness tool, <strong style="color: var(--text-primary);">not
+          security or legal advice.</strong> It surfaces publicly reported incidents for
+          buyer awareness. Do not use it as the sole basis for procurement decisions,
+          security assessments, or legal proceedings.
+        </p>
+        <p>
+          Always verify claims with the linked primary sources and the vendor's own
+          advisory pages. Severity ratings, status assessments, and patch lag figures
+          reflect what the radar has found as of the stated date&mdash;not necessarily
+          the complete picture.
+        </p>
+      </div>
+
+      <!-- Subscribe -->
+      <div class="method-footer">
+        <p>
+          Subscribe to updates:
+          <a href="feed.xml">feed.xml (RSS)</a>
+        </p>
+        <p style="margin-top: 8px;">
+          <a href="index.html">&larr; Back to Dashboard</a>
+        </p>
+      </div>
     </div>
   </section>
 

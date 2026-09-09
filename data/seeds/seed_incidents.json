@@ -1,0 +1,319 @@
+{
+  "incidents": [
+    {
+      "id": "INC-0001",
+      "title": "Unitree BLE command injection allows full device takeover (UniPwn)",
+      "category": "vuln",
+      "robot_class": "quadruped",
+      "vendor": "Unitree",
+      "model": "Go2/G1/H1/B2",
+      "severity": {"source": "estimated", "value": "critical"},
+      "status": {
+        "state": "unpatched",
+        "evidence_url": "https://github.com/Bin4ry/UniPwn",
+        "as_of": "2025-09-20",
+        "note": "No vendor advisory or firmware patch disclosed as of 2025-09-20; the disclosure page states Unitree has not released a fix. Researcher reported keys publicly in July 2025 with no vendor response."
+      },
+      "first_seen": "2025-09-20",
+      "last_checked": "2025-09-20",
+      "item_ids": ["itm-unipwn-github", "itm-ieee-unitree-exploit", "itm-arxiv-unitree-ai"],
+      "ai_summary": "Researchers disclosed a wormable, pre-auth Bluetooth RCE chain affecting Unitree Go2, G1, H1, and B2 robots via hardcoded AES keys and unsanitized WiFi configuration commands. The attack achieves root shell within BLE range and can self-propagate to other nearby Unitree robots. No vendor patch has been released."
+    },
+    {
+      "id": "INC-0002",
+      "title": "Ecovacs Deebot BLE hijacking and remote camera/microphone access",
+      "category": "vuln",
+      "robot_class": "consumer",
+      "vendor": "Ecovacs",
+      "model": "Deebot 900/T20/X2/Airbot series",
+      "severity": {"source": "estimated", "value": "critical"},
+      "status": {
+        "state": "patched",
+        "evidence_url": "https://www.cisa.gov/news-events/ics-advisories/icsa-25-135-19",
+        "as_of": "2025-07-10",
+        "note": "Firmware patches released May 2025; CISA Update A on 2025-07-10 confirmed mitigation available for all affected devices."
+      },
+      "first_seen": "2024-08-09",
+      "last_checked": "2025-07-10",
+      "item_ids": ["itm-techcrunch-ecovacs-2024", "itm-cisa-icsa-25-135-19", "itm-nvd-cve-2025-30198", "itm-nvd-cve-2025-30199"],
+      "ai_summary": "Researchers Dennis Giese and Braelynn Luedtke demonstrated hijacking Ecovacs robot vacuums via Bluetooth from 130 meters, gaining access to cameras, microphones, and WiFi credentials. Initially, Ecovacs refused to patch. CISA later published an advisory covering multiple CVEs with firmware updates now available."
+    },
+    {
+      "id": "INC-0003",
+      "title": "Unitree H1 humanoid robot lunges at festival crowd in Tianjin",
+      "category": "safety",
+      "robot_class": "humanoid",
+      "vendor": "Unitree",
+      "model": "H1",
+      "severity": {"source": "estimated", "value": "medium"},
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://www.sciencealert.com/viral-footage-of-robot-headbutting-woman-raises-safety-questions",
+        "as_of": "2025-02-28",
+        "note": "Public safety incident at a festival in Tianjin, China; video widely circulated. No injuries reported; handlers restrained the robot."
+      },
+      "first_seen": "2025-02-26",
+      "last_checked": "2025-02-28",
+      "item_ids": ["itm-sciencealert-unitree-festival", "itm-metro-unitree-attack", "itm-conversation-unitree"],
+      "ai_summary": "A Unitree H1 humanoid robot lurched toward festival spectators in Tianjin, China, nearly striking a bystander before handlers intervened. The viral video raised questions about safety protocols for deploying humanoid robots in proximity to untrained crowds."
+    },
+    {
+      "id": "INC-0004",
+      "title": "Unitree H1 humanoid robot thrashes violently during factory crane test",
+      "category": "safety",
+      "robot_class": "humanoid",
+      "vendor": "Unitree",
+      "model": "H1",
+      "severity": {"source": "estimated", "value": "medium"},
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://newatlas.com/ai-humanoids/humanoid-robot-nearly-injures-handlers-unitree/",
+        "as_of": "2025-05-08",
+        "note": "Video shows Unitree H1 thrashing uncontrollably during a crane-suspended test, nearly striking workers. Handler attributed the incident to a code error."
+      },
+      "first_seen": "2025-05-07",
+      "last_checked": "2025-05-08",
+      "item_ids": ["itm-newatlas-unitree-factory", "itm-techspot-unitree-berserk", "itm-ie-unitree-factory"],
+      "ai_summary": "A Unitree H1 robot suspended from a crane during a factory test began thrashing violently, nearly injuring nearby workers and damaging equipment. The handler attributed the malfunction to a code error, highlighting the physical risks of humanoid robots during development testing."
+    },
+    {
+      "id": "INC-0005",
+      "title": "Ecovacs Deebot firmware vulnerabilities — CISA advisory with multiple CVEs",
+      "category": "vuln",
+      "robot_class": "consumer",
+      "vendor": "Ecovacs",
+      "model": "Deebot X1/T10/T20/T30 series",
+      "severity": {"source": "cvss", "value": "8.6"},
+      "status": {
+        "state": "patched",
+        "evidence_url": "https://www.cisa.gov/news-events/ics-advisories/icsa-25-135-19",
+        "as_of": "2025-07-10",
+        "note": "Firmware patches released May 2025 for all affected devices. CISA Update A on 2025-07-10 confirmed mitigation available."
+      },
+      "first_seen": "2025-05-15",
+      "last_checked": "2025-07-10",
+      "item_ids": ["itm-cisa-icsa-25-135-19", "itm-nvd-cve-2025-30198", "itm-nvd-cve-2025-30199", "itm-nvd-cve-2025-30200"],
+      "ai_summary": "CISA published ICSA-25-135-19 covering multiple Ecovacs Deebot vulnerabilities including hardcoded cryptographic keys (CVE-2025-30198, CVE-2025-30200) and unsigned firmware downloads (CVE-2025-30199). The highest CVSS v4 score was 8.6. Ecovacs released firmware updates for all affected models."
+    },
+    {
+      "id": "INC-0006",
+      "title": "Unitree A1 quadruped BLE authentication bypass",
+      "category": "vuln",
+      "robot_class": "quadruped",
+      "vendor": "Unitree",
+      "model": "A1",
+      "severity": {"source": "estimated", "value": "high"},
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://nvd.nist.gov/vuln/detail/CVE-2023-3103",
+        "as_of": "2023-09-01",
+        "note": "CVE-2023-3103 assigned; no public vendor advisory or patch confirmation found. Status reflects absence of evidence of remediation."
+      },
+      "first_seen": "2023-09-01",
+      "last_checked": "2026-09-09",
+      "item_ids": ["itm-nvd-cve-2023-3103"],
+      "ai_summary": "CVE-2023-3103 documents an authentication bypass by spoofing in the Unitree A1 quadruped robot's BLE interface. The vulnerability allows unauthorized access via Bluetooth. No public vendor advisory or patch confirmation has been found."
+    },
+    {
+      "id": "INC-0007",
+      "title": "DJI Romo robot vacuum — MQTT access control flaw exposes 7,000 devices",
+      "category": "vuln",
+      "robot_class": "consumer",
+      "vendor": "DJI",
+      "model": "Romo",
+      "severity": {"source": "estimated", "value": "critical"},
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://www.theverge.com/tech/879088/dji-romo-hack-vulnerability-remote-control-camera-access-mqtt",
+        "as_of": "2026-02-24",
+        "note": "DJI acknowledged the vulnerability and issued a $30,000 bug bounty. No public firmware patch confirmation found as of 2026-02-24."
+      },
+      "first_seen": "2026-02-24",
+      "last_checked": "2026-02-24",
+      "item_ids": ["itm-verge-dji-romo", "itm-tomshardware-dji-romo", "itm-petapixel-dji-romo"],
+      "ai_summary": "A hobbyist attempting to connect a PS5 controller to their DJI Romo robot vacuum accidentally discovered that a single authenticated MQTT client could access over 7,000 DJI Romo devices, exposing live camera feeds and floor plans. DJI acknowledged the flaw and issued a bug bounty."
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-unipwn-github",
+      "source": "github_advisory",
+      "url": "https://github.com/Bin4ry/UniPwn",
+      "title": "Unitree Robot BLE Service Command Injection Analysis (UniPwn)",
+      "body": "Security researchers Bin4ry and h0stile disclosed a wormable BLE RCE chain affecting Unitree Go2, G1, H1, and B2 robots. The vulnerability combines hardcoded AES keys, trivial authentication bypass, and unsanitized command injection in the WiFi configuration interface, allowing complete root takeover within Bluetooth range.",
+      "published": "2025-09-20",
+      "cve_ids": ["CVE-2025-35027", "CVE-2025-60017", "CVE-2025-60250", "CVE-2025-60251"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-ieee-unitree-exploit",
+      "source": "press_rss",
+      "url": "https://spectrum.ieee.org/unitree-robot-exploit",
+      "title": "Exploit Allows for Takeover of Fleets of Unitree Robots",
+      "body": "IEEE Spectrum coverage of the UniPwn exploit demonstrating fleet-wide takeover capability of Unitree robots through BLE command injection with wormable propagation.",
+      "published": "2025-09-25",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-arxiv-unitree-ai",
+      "source": "press_rss",
+      "url": "https://arxiv.org/abs/2509.14139",
+      "title": "Cybersecurity AI: Humanoid Robots as Attack Vectors",
+      "body": "Research paper presenting a systematic security assessment of the Unitree G1 and broader Unitree product line, documenting the BLE command injection vulnerability and its implications for humanoid robot security.",
+      "published": "2025-09-20",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-techcrunch-ecovacs-2024",
+      "source": "press_rss",
+      "url": "https://techcrunch.com/2024/08/09/ecovacs-home-robots-can-be-hacked-to-spy-on-their-owners-researchers-say/",
+      "title": "Ecovacs home robots can be hacked to spy on their owners, researchers say",
+      "body": "Researchers Dennis Giese and Braelynn Luedtke presented at DEF CON 2024 demonstrating Bluetooth hijacking of Ecovacs robots from 130 meters, gaining access to cameras, microphones, and WiFi credentials. Ecovacs initially refused to fix the vulnerabilities.",
+      "published": "2024-08-09",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-cisa-icsa-25-135-19",
+      "source": "vendor_page",
+      "url": "https://www.cisa.gov/news-events/ics-advisories/icsa-25-135-19",
+      "title": "ECOVACS DEEBOT Vacuum and Base Station (Update A) — CISA ICS Advisory",
+      "body": "CISA advisory covering multiple Ecovacs Deebot vulnerabilities including hardcoded cryptographic keys (CVE-2025-30198, CVE-2025-30200) and unsigned firmware downloads (CVE-2025-30199). Firmware patches released for all affected models.",
+      "published": "2025-05-15",
+      "cve_ids": ["CVE-2025-30198", "CVE-2025-30199", "CVE-2025-30200"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-nvd-cve-2025-30198",
+      "source": "nvd",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-30198",
+      "title": "CVE-2025-30198 — Ecovacs Deebot hardcoded WPA2-PSK key",
+      "body": "Use of hard-coded cryptographic key (CWE-321) in Ecovacs robot vacuums and base stations. Insecure WiFi network with deterministic WPA2-PSK derivable from device serial number. CVSS v3.1 score: 6.3.",
+      "published": "2025-05-15",
+      "cve_ids": ["CVE-2025-30198"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-nvd-cve-2025-30199",
+      "source": "nvd",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-30199",
+      "title": "CVE-2025-30199 — Ecovacs Deebot unsigned firmware update",
+      "body": "Download of code without integrity check (CWE-494) in Ecovacs vacuum robot base stations. Malicious over-the-air firmware updates can be sent via insecure robot-to-base-station connection. CVSS v3.1 score: 7.2.",
+      "published": "2025-05-15",
+      "cve_ids": ["CVE-2025-30199"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-nvd-cve-2025-30200",
+      "source": "nvd",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-30200",
+      "title": "CVE-2025-30200 — Ecovacs Deebot hardcoded AES key",
+      "body": "Use of hard-coded cryptographic key (CWE-321) in Ecovacs robot vacuums and base stations. Insecure WiFi network with deterministic AES encryption key derivable from device serial number. CVSS v3.1 score: 6.3.",
+      "published": "2025-05-15",
+      "cve_ids": ["CVE-2025-30200"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-sciencealert-unitree-festival",
+      "source": "press_rss",
+      "url": "https://www.sciencealert.com/viral-footage-of-robot-headbutting-woman-raises-safety-questions",
+      "title": "Viral Footage of Robot Headbutting Woman Raises Safety Questions",
+      "body": "Coverage of the Unitree H1 humanoid robot incident at a festival in Tianjin, China, where the robot lunged toward spectators before handlers intervened.",
+      "published": "2025-02-28",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-metro-unitree-attack",
+      "source": "press_rss",
+      "url": "https://metro.co.uk/2025/02/26/humanoid-robot-dragged-away-attacking-crowd-people-festival-22632702/",
+      "title": "Humanoid robot dragged away after 'attacking' crowd of people at festival",
+      "body": "Metro News report on the Unitree H1 humanoid robot incident at a Chinese festival where the robot appeared to attack festival attendees.",
+      "published": "2025-02-26",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-conversation-unitree",
+      "source": "press_rss",
+      "url": "https://theconversation.com/a-robot-nearly-headbutted-a-festival-spectator-in-china-here-are-four-urgent-steps-to-make-the-tech-safer-250851",
+      "title": "A robot nearly headbutted a festival spectator in China — here are four urgent steps to make the tech safer",
+      "body": "Analysis of the Unitree H1 festival incident with recommendations for humanoid robot safety protocols in public settings.",
+      "published": "2025-03-05",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-newatlas-unitree-factory",
+      "source": "press_rss",
+      "url": "https://newatlas.com/ai-humanoids/humanoid-robot-nearly-injures-handlers-unitree/",
+      "title": "Viral video shows humanoid robot malfunctioning at public event",
+      "body": "New Atlas coverage of the Unitree H1 factory test malfunction where the robot thrashed violently while suspended from a crane, nearly striking workers.",
+      "published": "2025-05-08",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-techspot-unitree-berserk",
+      "source": "press_rss",
+      "url": "https://www.techspot.com/news/107856-factory-video-shows-unitree-robot-going-berserk-nearly.html",
+      "title": "Factory video shows Unitree robot going berserk, nearly injuring workers",
+      "body": "TechSpot report on video showing a Unitree robot malfunctioning during a factory test, with the robot thrashing violently near workers.",
+      "published": "2025-05-08",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-ie-unitree-factory",
+      "source": "press_rss",
+      "url": "https://interestingengineering.com/innovation/humanoid-robot-turns-on-handlers",
+      "title": "Robo-rage: Watch humanoid robot attack handlers at China factory",
+      "body": "Interesting Engineering coverage of the Unitree H1 factory test incident showing the robot becoming uncontrolled during testing.",
+      "published": "2025-05-08",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-nvd-cve-2023-3103",
+      "source": "nvd",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-3103",
+      "title": "CVE-2023-3103 — Unitree A1 authentication bypass by spoofing",
+      "body": "Authentication bypass by spoofing vulnerability in Unitree Robotics A1 quadruped robot via Bluetooth Low Energy interface.",
+      "published": "2023-09-01",
+      "cve_ids": ["CVE-2023-3103"],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-verge-dji-romo",
+      "source": "press_rss",
+      "url": "https://www.theverge.com/tech/879088/dji-romo-hack-vulnerability-remote-control-camera-access-mqtt",
+      "title": "The DJI Romo robovac had security so poor, this man remotely accessed thousands of them",
+      "body": "The Verge report on the DJI Romo robot vacuum MQTT vulnerability where a hobbyist accidentally accessed 7,000+ devices' cameras and floor plans while attempting to connect a PS5 controller.",
+      "published": "2026-02-24",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-tomshardware-dji-romo",
+      "source": "press_rss",
+      "url": "https://www.tomshardware.com/tech-industry/cyber-security/user-accidentally-gains-control-of-over-6-700-robot-vacuums-while-tinkering-with-their-own-device-to-enable-control-with-a-playstation-controller-security-flaw-reveals-floor-plans-and-live-video-feeds",
+      "title": "User accidentally gains control of over 6,700 robot vacuums while tinkering with PS5 controller",
+      "body": "Tom's Hardware report on the DJI Romo vulnerability discovered by a hobbyist, exposing camera feeds and floor plans across thousands of devices.",
+      "published": "2026-02-25",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-petapixel-dji-romo",
+      "source": "press_rss",
+      "url": "https://petapixel.com/2026/02/24/someone-remotely-accessed-the-cameras-in-7000-dji-robot-vacuums/",
+      "title": "Someone Remotely Accessed the Cameras in 7,000 DJI Robot Vacuums",
+      "body": "PetaPixel coverage of the DJI Romo MQTT vulnerability exposing live camera feeds from thousands of robot vacuums.",
+      "published": "2026-02-24",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    }
+  ]
+}
