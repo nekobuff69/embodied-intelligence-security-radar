@@ -354,34 +354,6 @@ a:hover {
   line-height: 1.5;
 }
 
-/* ── Wire section ────────────────────────────────────────────────── */
-
-.wire-list {
-  list-style: none;
-  padding: 0 24px 32px;
-}
-
-.wire-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 13px;
-}
-
-.wire-item a {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.wire-item a:hover {
-  color: var(--accent-green);
-}
-
-.wire-meta {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
 /* ── Detail view ─────────────────────────────────────────────────── */
 
 .detail-section {

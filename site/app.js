@@ -326,32 +326,7 @@ function renderDetail(inc, itemMap) {
   return html;
 }
 
-function renderWire(wire) {
-  var el = $("#wire-section");
-  if (!wire || wire.length === 0) {
-    el.style.display = "none";
-    return;
-  }
-  el.style.display = "";
-  var list = $("#wire-list");
-  list.innerHTML = "";
-  for (var i = 0; i < wire.length; i++) {
-    var w = wire[i];
-    var aiBlock = w.ai_summary
-      ? '<div class="ai-note"><span class="ai-label">AI-GENERATED — verify with the linked source</span><p>' + esc(w.ai_summary) + '</p></div>'
-      : '';
-    var li = document.createElement("li");
-    li.className = "wire-item";
-    li.innerHTML =
-      '<a href="' + esc(w.url) + '" target="_blank" rel="noopener">' + esc(w.title) + '</a>' +
-      '<div class="wire-meta">' +
-        '<span class="meta-label">Source:</span> ' + esc(w.source) +
-        ' · <span class="meta-label">Published:</span> ' + esc(w.published) +
-      '</div>' +
-      aiBlock;
-    list.appendChild(li);
-  }
-}
+
 
 // ── Filter bar / sort / search state ────────────────────────────────
 
@@ -530,7 +505,6 @@ async function init() {
     renderAxisCards(_data.meta.counts, _data.incidents);
     renderFilterBar(_data.incidents);
     applyFiltersAndRender(itemMap);
-    renderWire(_data.wire);
     $("#detail-section").style.display = "none";
 
     // ── Event listeners ──────────────────────────────────────────────
