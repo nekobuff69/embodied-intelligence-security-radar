@@ -141,6 +141,40 @@ def _override(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _prune(args: argparse.Namespace) -> None:
+    from pathlib import Path as _Path
+
+    from radar.prune import prune
+    from radar.registry import load, save_dismissed
+    from radar.overrides import save_atomic
+
+    registry_path = _Path(args.registry) if args.registry else _Path(_default_registry())
+    seeds_dir = _Path(args.seeds) if args.seeds else _Path("data/seeds")
+    dismissed_path = _Path("data/dismissed_urls.json")
+
+    try:
+        reg = load(registry_path)
+        reg, summary = prune(reg, seeds_dir)
+
+        print("Prune summary:")
+        for key, value in summary.items():
+            print(f"  {key}: {value}")
+
+        if args.dry_run:
+            print("\nDry run — no changes written.")
+        else:
+            # Persist blocklist
+            save_dismissed(dismissed_path, set(summary["dismissed_urls"]))
+            # Save pruned registry
+            save_atomic(reg, registry_path)
+            print(f"\nRegistry saved to {registry_path}")
+            print(f"Blocklist saved to {dismissed_path}")
+
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="radar",
@@ -197,6 +231,16 @@ def main() -> None:
         help="Print summary without writing",
     )
     override_parser.set_defaults(func=_override)
+
+    # radar prune
+    prune_parser = sub.add_parser(
+        "prune",
+        help="Retroactive pruning: dismiss stale/commentary items, demote ineligible incidents",
+    )
+    prune_parser.add_argument("--registry", default=None, help="Registry file path")
+    prune_parser.add_argument("--seeds", default=None, help="Seeds directory (default: data/seeds)")
+    prune_parser.add_argument("--dry-run", action="store_true", help="Print summary without writing")
+    prune_parser.set_defaults(func=_prune)
 
     args = parser.parse_args()
     if not args.command:

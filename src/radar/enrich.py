@@ -36,10 +36,21 @@ _CVSS_RE = re.compile(
 
 _SYSTEM_PROMPT = """\
 You are a security analyst for robotics products.
-Given an article title and body, extract the following fields as STRICT JSON \
-(no markdown, no commentary):
+Given an article title and body, FIRST judge whether the article describes \
+a real incident, then extract fields as STRICT JSON (no markdown, no commentary).
+
+RELEVANCE RUBRIC — an incident is a discrete, verifiable security or safety EVENT:
+  - Vulnerability with CVE ID or vendor advisory
+  - Confirmed attack, takeover, or breach
+  - Physical safety incident or recall
+NOT an incident (relevant: false):
+  - Podcast episodes, interviews, opinion pieces, commentary
+  - Product reviews, roundups, best-of lists
+  - Entertainment segments, hype, speculation, vague "could happen" framing
+  - Marketing, announcements, product launches without a security event
 
 {
+  "relevant": true | false,
   "ai_summary": "2-3 sentence buyer-facing plain English summary of the security risk",
   "ai_category": "vuln" | "attack" | "safety",
   "ai_vendor": "<vendor name or null if unknown>",
@@ -52,6 +63,8 @@ Given an article title and body, extract the following fields as STRICT JSON \
 }
 
 Rules:
+- relevant MUST be true only if the article describes a discrete security \
+or safety incident.  If relevant is false, set all other fields to null.
 - ai_category MUST be one of: vuln, attack, safety
 - ai_robot_class MUST be one of: humanoid, quadruped, consumer
 - ai_severity.source MUST be "cvss" only if the article text contains an \
@@ -120,7 +133,24 @@ def _apply_enrichment(item: Item, data: dict[str, Any]) -> None:
     Severity follows the CVSS-over-text rule: if the item text carries an
     explicit CVSS score we use ``source=cvss``; otherwise the model's
     estimated band is used with ``source=estimated``.
+
+    When ``relevant`` is explicitly ``false`` the item is marked as
+    ``ai_relevant=False`` and all other ``ai_*`` fields are left as ``None``.
+    When ``relevant`` is ``true`` the remaining fields are enriched normally.
+    When ``relevant`` is absent or non-boolean ``ai_relevant`` is set to
+    ``None`` (legacy behavior, eligibility layer decides).
     """
+    # Relevance verdict — first check
+    relevant = data.get("relevant")
+    if isinstance(relevant, bool):
+        item.ai_relevant = relevant
+        if not relevant:
+            # Commentary / non-incident: leave other ai_* fields as None
+            return
+    else:
+        # Malformed or missing — leave as None (legacy path)
+        item.ai_relevant = None
+
     # Basic string fields — drop empty / non-string to None
     summary = data.get("ai_summary")
     item.ai_summary = (

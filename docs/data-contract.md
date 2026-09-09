@@ -10,7 +10,7 @@ items:   [{id, source, url, title, body, published, cve_ids?, fetched_at}]
          source ∈ google_news|press_rss|reddit|hn|nvd|github_advisory|vendor_page
          items also carry optional LLM enrichment (filled by the LLM pass,
          lifted into Incidents by the clusterer): ai_summary?, ai_category?,
-         ai_vendor?, ai_model?, ai_robot_class?, ai_severity?
+         ai_vendor?, ai_model?, ai_robot_class?, ai_severity?, ai_relevant?
 incidents: [{id, title, category, robot_class, vendor, model?, severity, status,
              first_seen, last_checked, item_ids, ai_summary?, monitor_urls?}]
          category ∈ vuln|attack|safety ; robot_class ∈ humanoid|quadruped|consumer

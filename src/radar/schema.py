@@ -83,6 +83,7 @@ class Item:
     ai_model: str | None = None
     ai_robot_class: str | None = None
     ai_severity: Severity | None = None
+    ai_relevant: bool | None = None  # LLM relevance verdict; None = not yet enriched
 
     def __post_init__(self) -> None:
         _require(self.source in SOURCES, f"item.source {self.source!r} not in {sorted(SOURCES)}")

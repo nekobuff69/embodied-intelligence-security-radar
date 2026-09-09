@@ -19,7 +19,7 @@ from radar.enrich import enrich
 from radar.fetchers import fetch
 from radar.gate import apply_gate
 from radar.monitor import monitor
-from radar.registry import apply_items, load, save
+from radar.registry import apply_items, load, load_dismissed, save
 from radar.schema import Item, Registry, item_id_for_url
 
 log = logging.getLogger(__name__)
@@ -123,6 +123,20 @@ def run(
             continue
         seen_urls.add(it.url)
         new_items.append(it)
+
+    # 4a. Filter against dismissed-URL blocklist (retroactive pruning)
+    dismissed_path = Path(__file__).resolve().parents[2] / "data" / "dismissed_urls.json"
+    dismissed_urls = load_dismissed(dismissed_path)
+    dismissed_blocked = 0
+    if dismissed_urls:
+        filtered: list[Item] = []
+        for it in new_items:
+            if it.url in dismissed_urls:
+                dismissed_blocked += 1
+            else:
+                filtered.append(it)
+        new_items = filtered
+
     reg, added = apply_items(reg, new_items)
 
     # 4b. Cluster items into incidents (ADR-0001)
@@ -276,6 +290,7 @@ def run(
         "created": created,
         "attached": attached,
         "status_changed": status_changed,
+        "dismissed_blocked": dismissed_blocked,
         "llm_provider": llm_provider,
         "llm_model": llm_model,
         **{f"monitor_{k}": v for k, v in monitor_summary.items()},

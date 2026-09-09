@@ -324,6 +324,105 @@ class TestEnrich:
 # ── Runner no-key skip ──────────────────────────────────────────────
 
 
+class TestRelevance:
+    """Test the relevance verdict handling in _apply_enrichment."""
+
+    def test_relevant_false_sets_ai_relevant_and_leaves_others_none(self):
+        """relevant:false → ai_relevant=False, all other ai_* fields stay None."""
+        item = _make_item()
+        data = {
+            "relevant": False,
+            "ai_summary": "This is a podcast episode about robots.",
+            "ai_category": "vuln",
+            "ai_vendor": "Unitree",
+            "ai_model": "Go2",
+            "ai_robot_class": "quadruped",
+            "ai_severity": {"source": "estimated", "value": "high"},
+        }
+        _apply_enrichment(item, data)
+        assert item.ai_relevant is False
+        assert item.ai_summary is None
+        assert item.ai_category is None
+        assert item.ai_vendor is None
+        assert item.ai_model is None
+        assert item.ai_robot_class is None
+        assert item.ai_severity is None
+
+    def test_relevant_true_populates_fields(self):
+        """relevant:true → ai_relevant=True, other fields enriched normally."""
+        item = _make_item()
+        data = {
+            "relevant": True,
+            "ai_summary": "A critical BLE vulnerability affects Go2 robots.",
+            "ai_category": "vuln",
+            "ai_vendor": "Unitree",
+            "ai_model": "Go2",
+            "ai_robot_class": "quadruped",
+            "ai_severity": {"source": "estimated", "value": "high"},
+        }
+        _apply_enrichment(item, data)
+        assert item.ai_relevant is True
+        assert item.ai_summary == "A critical BLE vulnerability affects Go2 robots."
+        assert item.ai_category == "vuln"
+        assert item.ai_vendor == "Unitree"
+        assert item.ai_model == "Go2"
+        assert item.ai_robot_class == "quadruped"
+        assert isinstance(item.ai_severity, Severity)
+
+    def test_missing_relevant_leaves_ai_relevant_none(self):
+        """Missing relevant → ai_relevant=None (legacy path)."""
+        item = _make_item()
+        data = {
+            "ai_summary": "A vulnerability disclosure.",
+            "ai_category": "vuln",
+        }
+        _apply_enrichment(item, data)
+        assert item.ai_relevant is None
+
+    def test_non_boolean_relevant_leaves_ai_relevant_none(self):
+        """Non-boolean relevant → ai_relevant=None."""
+        item = _make_item()
+        data = {"relevant": "yes"}
+        _apply_enrichment(item, data)
+        assert item.ai_relevant is None
+
+    def test_relevant_false_via_enrich_transport(self):
+        """Full enrich pipeline: relevant:false sets ai_relevant=False."""
+        fx = _load_fixtures()
+        item = _make_item()
+        enrich([item], "http://fake", "model", "key",
+               transport=_transport_for(fx[5]["content"]))
+        assert item.ai_relevant is False
+        assert item.ai_summary is None
+        assert item.ai_category is None
+
+    def test_relevant_true_via_enrich_transport(self):
+        """Full enrich pipeline: relevant:true enriches normally."""
+        fx = _load_fixtures()
+        item = _make_item()
+        enrich([item], "http://fake", "model", "key",
+               transport=_transport_for(fx[0]["content"]))
+        assert item.ai_relevant is True
+        assert item.ai_category == "vuln"
+        assert item.ai_summary is not None
+
+    def test_missing_relevant_via_enrich_transport(self):
+        """Full enrich pipeline: missing relevant → ai_relevant=None."""
+        item = _make_item()
+        resp = _json_response({
+            "ai_summary": "Test.",
+            "ai_category": "vuln",
+            "ai_vendor": "Unitree",
+            "ai_model": "Go2",
+            "ai_robot_class": "quadruped",
+            "ai_severity": {"source": "estimated", "value": "high"},
+        })
+        enrich([item], "http://fake", "model", "key",
+               transport=_transport_for(resp))
+        assert item.ai_relevant is None
+        assert item.ai_category == "vuln"
+
+
 class TestNoKeySkip:
     def test_runner_skips_enrichment_without_key(self, monkeypatch, tmp_path):
         """When RADAR_LLM_API_KEY is unset, enriched count must be 0."""

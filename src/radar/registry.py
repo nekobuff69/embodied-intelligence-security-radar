@@ -6,6 +6,7 @@ status transition hygiene (ADR-0003), and incident-item attachment.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from radar.schema import (
@@ -28,6 +29,61 @@ def save(reg: Registry, path: Path) -> None:
     """Validate and save a registry to disk."""
     path.parent.mkdir(parents=True, exist_ok=True)
     save_registry(reg, path)
+
+
+def load_dismissed(path: Path) -> set[str]:
+    """Load dismissed URLs from a JSON list file.
+
+    Returns an empty set if the file does not exist.
+    """
+    if not path.exists():
+        return set()
+    data = json.loads(path.read_text())
+    return set(data)
+
+
+def save_dismissed(path: Path, urls: set[str]) -> None:
+    """Save dismissed URLs to a JSON list file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sorted(urls), indent=2) + "\n")
+
+
+def dismiss_items(reg: Registry, urls: set[str]) -> dict:
+    """Remove items whose url is in *urls* from the registry.
+
+    Also removes item references from incidents; incidents left with
+    zero item_ids are deleted entirely (schema invariant).
+
+    Returns a summary dict with removed_items and removed_incidents counts.
+    """
+    urls_to_dismiss = set(urls)
+    # Collect item ids to remove
+    ids_to_remove: set[str] = set()
+    for item in reg.items:
+        if item.url in urls_to_dismiss:
+            ids_to_remove.add(item.id)
+
+    if not ids_to_remove:
+        return {"removed_items": 0, "removed_incidents": 0}
+
+    # Filter items
+    reg.items = [item for item in reg.items if item.id not in ids_to_remove]
+
+    # Update incidents: remove references and delete emptied ones
+    removed_incidents = 0
+    remaining_incidents: list[Incident] = []
+    for inc in reg.incidents:
+        inc.item_ids = [iid for iid in inc.item_ids if iid not in ids_to_remove]
+        if not inc.item_ids:
+            removed_incidents += 1
+        else:
+            remaining_incidents.append(inc)
+    reg.incidents = remaining_incidents
+
+    return {
+        "removed_items": len(ids_to_remove),
+        "removed_incidents": removed_incidents,
+    }
 
 
 def apply_items(reg: Registry, new_items: list[Item]) -> tuple[Registry, int]:

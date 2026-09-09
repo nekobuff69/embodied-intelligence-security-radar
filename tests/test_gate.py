@@ -1,6 +1,9 @@
 """Tests for the deterministic Rules gate."""
 
+from datetime import date, timedelta
+
 from radar.gate import (
+    COMMENTARY_TERMS,
     EXCLUDE_DRONE_TERMS,
     EXCLUDE_INDUSTRIAL_TERMS,
     INCIDENT_TERMS,
@@ -10,7 +13,7 @@ from radar.gate import (
 from radar.schema import Item, item_id_for_url
 
 
-def _item(title: str, body: str = "", url: str = "https://example.com/test") -> Item:
+def _item(title: str, body: str = "", url: str = "https://example.com/test", published: str = "2026-01-01") -> Item:
     """Create a test Item with the given title and body."""
     return Item(
         id=item_id_for_url(url),
@@ -18,7 +21,7 @@ def _item(title: str, body: str = "", url: str = "https://example.com/test") -> 
         url=url,
         title=title,
         body=body,
-        published="2026-01-01",
+        published=published,
         cve_ids=[],
     )
 
@@ -264,3 +267,196 @@ class TestGateConstants:
 
     def test_incident_terms_non_empty(self):
         assert len(INCIDENT_TERMS) > 0
+
+    def test_commentary_terms_non_empty(self):
+        assert len(COMMENTARY_TERMS) > 0
+
+
+class TestGateDateSanity:
+    """Items outside the valid date window should be dropped."""
+
+    def test_stale_item_dropped(self):
+        """Item from 1998 is older than 3 years → dropped."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="1998-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_future_item_dropped(self):
+        """Item 30 days in the future → dropped."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2026-10-09",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_malformed_date_rejected_at_schema_boundary(self):
+        """Unparseable dates can't reach the gate: schema.py rejects the Item
+        at construction; fetchers normalize to today. Defense-in-depth: the
+        gate's date check also treats unparseable values as stale if one
+        ever slips through a lenient construction path.
+        """
+        import pytest
+
+        with pytest.raises(ValueError, match="published"):
+            _item(
+                "Robot hacked with CVE-2024-12345",
+                "A robot was compromised by attackers.",
+                published="not-a-date",
+            )
+
+    def test_in_window_item_kept(self):
+        """Robot+incident item within the valid window → kept."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 1
+
+    def test_boundary_oldest_kept(self):
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published=(date(2026, 9, 9) - timedelta(days=1095)).isoformat(),
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 1
+
+    def test_boundary_one_day_old_dropped(self):
+        """Item one day older than oldest boundary → dropped."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2023-09-08",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_boundary_newest_kept(self):
+        """Item exactly at newest boundary (today + 2d) → kept."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2026-09-11",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 1
+
+    def test_boundary_one_day_future_dropped(self):
+        """Item one day beyond newest boundary → dropped."""
+        items = [_item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2026-09-12",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+
+class TestGateCommentaryExclusion:
+    """Commentary/opinion/podcast items should be dropped."""
+
+    def test_podcast_dropped(self):
+        items = [_item(
+            "Robot Security Podcast Episode 42",
+            "This week we discuss the latest robot security trends and vulnerabilities.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_episode_dropped(self):
+        items = [_item(
+            "Robot episode explores hacking humanoid robots",
+            "A new episode of our show covers robot vulnerabilities and CVE-2024-12345.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_interview_dropped(self):
+        items = [_item(
+            "Interview with robot security researcher",
+            "We interview a researcher about humanoid robot vulnerabilities and attacks.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_opinion_dropped(self):
+        items = [_item(
+            "Opinion: robots are safe enough",
+            "My opinion on why robot security is overhyped and not a real concern.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_roundup_dropped(self):
+        items = [_item(
+            "Weekly roundup of robot news",
+            "This week's roundup includes robot hacks, CVE-2024-12345, and safety recalls.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_fun_kids_meets_dropped(self):
+        items = [_item(
+            "Fun Kids Meets the Unitree robot",
+            "The Fun Kids Meets show features a quadruped robot demonstration.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_screen_time_dropped(self):
+        items = [_item(
+            "Screen time with robots: is it safe?",
+            "Parents worry about screen time with consumer robots and data privacy.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_webinar_dropped(self):
+        items = [_item(
+            "Robot security webinar with experts",
+            "Join our webinar to discuss humanoid robot vulnerabilities and attacks.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+    def test_commentary_stem_dropped(self):
+        """'commentary' matches the 'commentar' stem."""
+        items = [_item(
+            "Robot security commentary: what buyers need to know",
+            "Our commentary on recent robot attacks and CVE-2024-12345 disclosures.",
+            published="2026-06-15",
+        )]
+        result = apply_gate(items, today=date(2026, 9, 9))
+        assert len(result) == 0
+
+
+class TestGateInjectableToday:
+    """Verify the today= parameter controls date sanity."""
+
+    def test_today_injection_changes_results(self):
+        """An item that's stale relative to one today is valid for another."""
+        item = _item(
+            "Robot hacked with CVE-2024-12345",
+            "A robot was compromised by attackers.",
+            published="2023-06-01",
+        )
+        # Relative to 2026-09-09: 2023-06-01 is > 1095 days ago → dropped
+        assert len(apply_gate([item], today=date(2026, 9, 9))) == 0
+        # Relative to 2024-01-01: 2023-06-01 is within window → kept
+        assert len(apply_gate([item], today=date(2024, 1, 1))) == 1

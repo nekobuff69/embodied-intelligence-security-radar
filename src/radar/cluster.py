@@ -7,6 +7,11 @@ Stage 2: optional LLM verdict on remaining unmatched items.
 Status proposals are deterministic: keyword phrases in item text produce
 evidence-carrying proposals (ADR-0003).  The ``llm`` callable is injectable
 (runner wires it from RADAR_LLM_* env vars); when *None* stage 2 is skipped.
+
+Create eligibility: only items with CVE IDs *or* ai_relevant=True with a
+known vendor (non-empty, non-Unknown) may create a new incident.  Items
+failing this gate are ``defer``-ed: they remain on the wire but no incident
+is created.
 """
 
 from __future__ import annotations
@@ -163,6 +168,7 @@ def cluster(
     embedder: Callable[[str], list[float]] | None = None,
     llm: Callable[[list[dict], Item], dict] | None = None,
     vector_memo: dict[str, list[float]] | None = None,
+    today: str | None = None,
 ) -> tuple[Registry, list[dict]]:
     """Cluster *items* into *reg* incidents.
 
@@ -171,6 +177,11 @@ def cluster(
       stage 1  embedding cosine top-3 over open + reopen-window incidents
       stage 2  optional LLM verdict (only when stage 0 missed and stage 1
                found candidates; ``llm=None`` → skipped)
+
+    Create eligibility: when no stage matched and a new incident would be
+    created, only items with ``cve_ids`` *or* ``ai_relevant is True`` with
+    a known vendor are eligible.  Ineligible items are deferred (stayed on
+    the wire, no incident created).
 
     *vector_memo*: optional per-run dict keyed by incident id, caching
     precomputed vectors.  Passed in from a prior call (or empty dict on
@@ -183,11 +194,12 @@ def cluster(
 
     Returns ``(registry, decisions)`` where each decision is::
 
-        {"action": "attach"|"create",
+        {"action": "attach"|"create"|"defer",
          "incident_id"?: str,
          "status_proposal"?: dict}
     """
-    today = date.today().isoformat()
+    if today is None:
+        today = date.today().isoformat()
     decisions: list[dict] = []
 
     # ── Build candidate index ────────────────────────────────────────
@@ -307,6 +319,18 @@ def cluster(
 
             decisions.append(dec)
         else:
+            # Create-eligibility gate: only items with CVE IDs or
+            # ai_relevant=True with a known vendor may create incidents.
+            # Ineligible items stay on the wire (deferred).
+            has_cve = bool(item.cve_ids)
+            is_eligible = has_cve or (
+                item.ai_relevant is True
+                and item.ai_vendor not in (None, "", "Unknown")
+            )
+            if not is_eligible:
+                decisions.append({"action": "defer"})
+                continue
+
             # Create new incident
             inc_id = next_incident_id(reg)
 

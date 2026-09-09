@@ -45,6 +45,7 @@ def _item(
     ai_category: str | None = None,
     ai_robot_class: str | None = None,
     ai_severity: Severity | None = None,
+    ai_relevant: bool | None = None,
     published: str = "2026-09-01",
 ) -> Item:
     return Item(
@@ -60,6 +61,7 @@ def _item(
         ai_category=ai_category,
         ai_robot_class=ai_robot_class,
         ai_severity=ai_severity,
+        ai_relevant=ai_relevant,
     )
 
 
@@ -194,9 +196,10 @@ class TestExactJoinVendorModel:
         )
 
         reg, decisions = cluster(reg, [new_item])
-
-        # Vendor matches but model doesn't → create
-        assert decisions[0]["action"] == "create"
+        # New contract: vendor matches but model mismatches → no exact join,
+        # and without CVE ids or enrichment the item is ineligible → defer.
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 1
 
     def test_case_insensitive_vendor(self):
         inc, items = _incident(vendor="Unitree", model="Go2")
@@ -212,6 +215,148 @@ class TestExactJoinVendorModel:
 
         reg, decisions = cluster(reg, [new_item])
         assert decisions[0]["action"] == "attach"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Create-eligibility gate
+# ═══════════════════════════════════════════════════════════════════
+
+
+class TestCreateEligibility:
+    """Items without CVE IDs or enriched ai_relevant are deferred."""
+
+    def test_no_cve_no_enrichment_defers(self):
+        """Item with no CVE and no ai_relevant → defer, no incident created."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/no-cve-no-enrich",
+            title="Random robot article",
+            body="Just a general article about robots",
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 0
+
+    def test_cve_item_creates(self):
+        """Item with CVE IDs → eligible, creates new incident."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/cve-report",
+            title="CVE-2026-12345 affects robot firmware",
+            body="Critical firmware vulnerability",
+            cve_ids=["CVE-2026-12345"],
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "create"
+        assert len(reg.incidents) == 1
+
+    def test_ai_relevant_with_vendor_creates(self):
+        """Item with ai_relevant=True and known vendor → creates incident."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/enriched-report",
+            title="Security issue in Unitree robot",
+            body="Vulnerability found in Unitree Go2",
+            ai_relevant=True,
+            ai_vendor="Unitree",
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "create"
+        assert len(reg.incidents) == 1
+
+    def test_ai_relevant_false_defers(self):
+        """Item with ai_relevant=False → defer even with plausible text."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/ai-false",
+            title="Robot vulnerability discussion",
+            body="Detailed discussion of a robot firmware flaw",
+            ai_relevant=False,
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 0
+
+    def test_ai_relevant_unknown_vendor_defers(self):
+        """ai_relevant=True but vendor is 'Unknown' → defer."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/unknown-vendor",
+            title="Robot vulnerability disclosed",
+            body="New vulnerability in unknown robot",
+            ai_relevant=True,
+            ai_vendor="Unknown",
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 0
+
+    def test_ai_relevant_empty_vendor_defers(self):
+        """ai_relevant=True but vendor is empty string → defer."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/empty-vendor",
+            title="Robot vulnerability disclosed",
+            body="New vulnerability in robot",
+            ai_relevant=True,
+            ai_vendor="",
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 0
+
+    def test_ai_relevant_none_vendor_defers(self):
+        """ai_relevant=True but vendor is None → defer."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/none-vendor",
+            title="Robot vulnerability disclosed",
+            body="New vulnerability in robot",
+            ai_relevant=True,
+            ai_vendor=None,
+        )
+
+        reg, decisions = cluster(reg, [item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "defer"
+        assert len(reg.incidents) == 0
+
+    def test_exact_match_bypasses_eligibility(self):
+        """Items that match an existing incident via CVE bypass eligibility."""
+        inc, items = _incident(cve_ids_in_items=["CVE-2026-12345"])
+        reg = _registry_with(inc, items)
+
+        # This item has no enrichment but matches via CVE → attaches (not deferred)
+        new_item = _item(
+            url="https://example.com/cve-match",
+            title="Update on CVE-2026-12345",
+            body="Follow-up details",
+            cve_ids=["CVE-2026-12345"],
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        assert decisions[0]["action"] == "attach"
+        assert decisions[0]["incident_id"] == "INC-0001"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -246,6 +391,7 @@ class TestEmbeddingTopK:
             url="https://example.com/search-query",
             title="Robot firmware vulnerability disclosure",
             body="Critical firmware vulnerability disclosed in robot",
+            cve_ids=["CVE-2026-10001"],
         )
 
         reg, decisions = cluster(
@@ -287,6 +433,7 @@ class TestEmbeddingTopK:
             url="https://example.com/embed-test",
             title="Robot vulnerability similar to OpenVendor issue",
             body="Similar vulnerability found in robot systems",
+            cve_ids=["CVE-2026-20001"],
         )
 
         # With embedder, only open_inc should be a candidate
@@ -294,7 +441,7 @@ class TestEmbeddingTopK:
             reg, [new_item], embedder=_trigram_embedder
         )
 
-        # The new item creates a new incident (no exact match)
+        # The new item creates a new incident (no exact match, has CVE)
         assert decisions[0]["action"] == "create"
 
 
@@ -335,12 +482,13 @@ class TestLLMVerdict:
         assert decisions[0]["incident_id"] == "INC-0001"
 
     def test_llm_none_creates(self):
-        """When llm=None and no exact/embedding match → create."""
+        """When llm=None and no exact/embedding match → create (item has CVE)."""
         reg = Registry()
         new_item = _item(
             url="https://example.com/no-match",
             title="Brand new vulnerability",
             body="Completely new issue",
+            cve_ids=["CVE-2026-30001"],
         )
 
         reg, decisions = cluster(reg, [new_item], llm=None)
@@ -356,6 +504,7 @@ class TestLLMVerdict:
             url="https://example.com/llm-create",
             title="Unrelated issue",
             body="Something different",
+            cve_ids=["CVE-2026-30002"],
         )
 
         def stub_llm(candidates: list[dict], item: Item) -> dict:
@@ -452,6 +601,7 @@ class TestStatusProposals:
             url="https://example.com/patch-create",
             title="Patch released for quadruped firmware issue",
             body="A patch was released today fixing the firmware vulnerability",
+            cve_ids=["CVE-2026-40001"],
         )
 
         reg, decisions = cluster(reg, [new_item])
@@ -470,6 +620,7 @@ class TestStatusProposals:
             url="https://example.com/exploit-create",
             title="Humanoid robot vulnerability exploited in the wild",
             body="Attackers have been exploiting this vulnerability in the wild",
+            cve_ids=["CVE-2026-40002"],
         )
 
         reg, decisions = cluster(reg, [new_item])
@@ -576,6 +727,7 @@ class TestConstantPromptBound:
             url="https://example.com/bound-test",
             title="New robot firmware vulnerability disclosure",
             body="Critical firmware vulnerability disclosed in robot platform",
+            cve_ids=["CVE-2026-50001"],
         )
 
         reg, decisions = cluster(reg, [test_item], llm=stub_llm)
