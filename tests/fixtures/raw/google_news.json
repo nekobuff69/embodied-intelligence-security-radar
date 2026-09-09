@@ -1,0 +1,23 @@
+[
+  {
+    "feed_type": "google_news",
+    "title": "Quadruped robot hacked at security conference",
+    "url": "https://example.com/news/quad-hack",
+    "published": "2026-04-12",
+    "summary": "Fixture body: researchers hacked a quadruped robot at DEF CON, exposing firmware vulnerabilities."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Home robot camera stream hijacked, vendor confirms",
+    "url": "https://example.com/news/vendor-b-hijack",
+    "published": "2026-08-18",
+    "summary": "Fixture body: vendor confirms remote camera takeover in the wild."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Amazon warehouse robot injuries remain underreported",
+    "url": "https://example.com/news/amazon-warehouse",
+    "published": "2026-05-01",
+    "summary": "Fixture body: warehouse robots continue to injure workers with safety reports allegedly suppressed."
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "name": "robot-security-radar",
+  "private": true,
+  "devDependencies": {
+    "happy-dom": "^17.0.0"
+  }
+}

@@ -1,0 +1,45 @@
+name: daily
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: radar-daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run radar pipeline
+        run: uv run radar run --site-dir site
+
+      - name: Commit registry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/registry.json
+          if ! git diff --quiet --cached data/registry.json; then
+            git commit -m "chore(data): daily radar run"
+            git push
+          fi
+
+      - name: Trigger deploy
+        run: gh workflow run pages-deploy.yml --ref ${{ github.ref_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

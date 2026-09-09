@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Security Radar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="radar-icon"></div>
+      <h1>ROBOT SECURITY RADAR</h1>
+    </div>
+    <nav class="header-nav">
+      <a href="?">Dashboard</a>
+      <a href="method.html">Method</a>
+    </nav>
+  </header>
+
+  <!-- Hero counters -->
+  <section class="hero">
+    <h2>Embodied Intelligence Security Intelligence</h2>
+    <div class="hero-counters">
+      <div class="hero-counter">
+        <span class="hero-number" id="count-incidents">—</span>
+        <span class="hero-label">Incidents</span>
+      </div>
+      <div class="hero-counter">
+        <span class="hero-number" id="count-unpatched">—</span>
+        <span class="hero-label">Unpatched</span>
+      </div>
+      <div class="hero-counter">
+        <span class="hero-number" id="count-lag">—</span>
+        <span class="hero-label">Longest Lag (days)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category axis cards -->
+  <section class="axis-cards" id="axis-cards"></section>
+
+  <!-- Incident grid -->
+  <section id="grid-section">
+    <h2 class="section-heading">All Incidents</h2>
+    <div class="incident-grid" id="incident-grid"></div>
+
+    <!-- Wire list (unclustered Items) -->
+    <div id="wire-section" style="display:none">
+      <h2 class="section-heading">Wire</h2>
+      <ul class="wire-list" id="wire-list"></ul>
+    </div>
+  </section>
+
+  <!-- Detail view (populated by query param) -->
+  <section class="detail-section" id="detail-section" style="display:none"></section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Robot Security Radar &mdash; not security or legal advice. Verify all claims with linked sources.</p>
+    <p><a href="method.html">Method</a></p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

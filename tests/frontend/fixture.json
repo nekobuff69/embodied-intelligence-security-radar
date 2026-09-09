@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "generated_at": "2026-09-09",
+    "counts": {
+      "incidents": 3,
+      "unpatched": 2,
+      "max_patch_lag_days": 755
+    }
+  },
+  "incidents": [
+    {
+      "id": "INC-0001",
+      "title": "Vendor A quadruped BLE pairing bypass (fixture)",
+      "category": "vuln",
+      "robot_class": "quadruped",
+      "vendor": "Vendor A",
+      "model": "Q-2 Pro",
+      "severity": {
+        "source": "estimated",
+        "value": "high"
+      },
+      "status": {
+        "state": "unpatched",
+        "evidence_url": "https://example.com/advisory/vendor-a-ble",
+        "as_of": "2026-09-01"
+      },
+      "first_seen": "2024-08-15",
+      "last_checked": "2026-09-01",
+      "item_ids": [
+        "itm-fix00000001",
+        "itm-fix00000002",
+        "itm-fix00000003"
+      ],
+      "ai_summary": "Fixture summary: a Bluetooth pairing flaw lets nearby attackers pair without consent. No fix has been disclosed as of 2026-09-01. Verify with the linked sources.",
+      "open": true
+    },
+    {
+      "id": "INC-0002",
+      "title": "Home robot camera stream hijacked in the wild (fixture)",
+      "category": "attack",
+      "robot_class": "consumer",
+      "vendor": "Vendor B",
+      "model": null,
+      "severity": {
+        "source": "estimated",
+        "value": "critical"
+      },
+      "status": {
+        "state": "exploited_in_wild",
+        "evidence_url": "https://example.com/news/vendor-b-hijack",
+        "as_of": "2026-08-20"
+      },
+      "first_seen": "2026-08-18",
+      "last_checked": "2026-08-20",
+      "item_ids": [
+        "itm-fix00000004",
+        "itm-fix00000005"
+      ],
+      "ai_summary": "Fixture summary: attackers took over a home robot's camera remotely. Exploitation confirmed in the wild as of 2026-08-20. Verify with the linked sources.",
+      "open": true
+    },
+    {
+      "id": "INC-0003",
+      "title": "Demo humanoid trapped worker during expo malfunction (fixture)",
+      "category": "safety",
+      "robot_class": "humanoid",
+      "vendor": "Vendor C",
+      "model": "H-1",
+      "severity": {
+        "source": "estimated",
+        "value": "medium"
+      },
+      "status": {
+        "state": "disclosed",
+        "evidence_url": "https://example.com/news/expo-incident",
+        "as_of": "2026-07-02"
+      },
+      "first_seen": "2026-07-01",
+      "last_checked": "2026-07-02",
+      "item_ids": [
+        "itm-fix00000006"
+      ],
+      "ai_summary": null,
+      "open": true
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-fix00000001",
+      "source": "press_rss",
+      "url": "https://example.com/a/ble-disclosure",
+      "title": "Researchers disclose BLE pairing bypass in Vendor A quadruped",
+      "body": "Fixture body: researchers disclosed a Bluetooth pairing bypass affecting Vendor A Q-2 Pro units.",
+      "published": "2024-08-15",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000002",
+      "source": "reddit",
+      "url": "https://example.com/r/robotics/ble-thread",
+      "title": "Vendor A BLE bug still not fixed one year later",
+      "body": "Fixture body: community thread notes the Vendor A BLE issue remains unpatched a year after disclosure.",
+      "published": "2025-08-20",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000003",
+      "source": "vendor_page",
+      "url": "https://example.com/advisory/vendor-a-ble",
+      "title": "Vendor A security advisory page for BLE pairing",
+      "body": "Fixture body: advisory page, last reviewed 2026-09-01 with no fix listed.",
+      "published": "2026-09-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000004",
+      "source": "google_news",
+      "url": "https://example.com/news/vendor-b-hijack",
+      "title": "Home robot camera stream hijacked, vendor confirms",
+      "body": "Fixture body: vendor confirms remote camera takeover in the wild.",
+      "published": "2026-08-18",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000005",
+      "source": "press_rss",
+      "url": "https://example.com/a/vendor-b-followup",
+      "title": "Follow-up: hijacked home robot cameras used to spy",
+      "body": "Fixture body: follow-up reporting on the Vendor B hijack.",
+      "published": "2026-08-20",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000006",
+      "source": "google_news",
+      "url": "https://example.com/news/expo-incident",
+      "title": "Demo humanoid malfunction traps worker at expo",
+      "body": "Fixture body: a humanoid demo unit malfunctioned and trapped a worker behind a barrier.",
+      "published": "2026-07-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    }
+  ],
+  "wire": []
+}

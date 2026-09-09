@@ -1,0 +1,79 @@
+[
+  {
+    "feed_type": "press_rss",
+    "title": "Researchers disclose BLE pairing bypass in Vendor A quadruped",
+    "url": "https://example.com/a/ble-disclosure",
+    "published": "2024-08-15",
+    "summary": "Fixture body: researchers disclosed a Bluetooth pairing bypass affecting Vendor A Q-2 Pro units."
+  },
+  {
+    "feed_type": "reddit",
+    "title": "Vendor A BLE bug still not fixed one year later",
+    "url": "https://example.com/r/robotics/ble-thread",
+    "published": "2025-08-20",
+    "summary": "Fixture body: community thread notes the Vendor A BLE issue remains unpatched a year after disclosure."
+  },
+  {
+    "feed_type": "vendor_page",
+    "title": "Vendor A security advisory page for BLE pairing",
+    "url": "https://example.com/advisory/vendor-a-ble",
+    "published": "2026-09-01",
+    "summary": "Fixture body: advisory page, last reviewed 2026-09-01 with no fix listed."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Home robot camera stream hijacked, vendor confirms",
+    "url": "https://example.com/news/vendor-b-hijack",
+    "published": "2026-08-18",
+    "summary": "Fixture body: vendor confirms remote camera takeover in the wild."
+  },
+  {
+    "feed_type": "press_rss",
+    "title": "Follow-up: hijacked home robot cameras used to spy",
+    "url": "https://example.com/a/vendor-b-followup",
+    "published": "2026-08-20",
+    "summary": "Fixture body: follow-up reporting on the Vendor B hijack."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Demo humanoid malfunction traps worker at expo",
+    "url": "https://example.com/news/expo-incident",
+    "published": "2026-07-01",
+    "summary": "Fixture body: a humanoid demo unit malfunctioned and trapped a worker behind a barrier."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Best drones for aerial photography in 2026",
+    "url": "https://example.com/news/drone-roundup",
+    "published": "2026-08-01",
+    "summary": "Fixture body: roundup of the best consumer drones for photography and videography."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Tesla FSD update promises better lane keeping",
+    "url": "https://example.com/news/tesla-fsd-update",
+    "published": "2026-07-15",
+    "summary": "Fixture body: Tesla releases Full Self-Driving software update with improved lane keeping."
+  },
+  {
+    "feed_type": "press_rss",
+    "title": "KUKA unveils next-gen industrial robot arm",
+    "url": "https://example.com/news/kuka-industrial",
+    "published": "2026-06-20",
+    "summary": "Fixture body: KUKA introduces new industrial robot arm for automotive assembly lines."
+  },
+  {
+    "feed_type": "google_news",
+    "title": "Unitree humanoid robot security vulnerability CVE-2024-12345",
+    "url": "https://example.com/news/unitree-cve",
+    "published": "2026-03-10",
+    "summary": "Fixture body: a critical vulnerability CVE-2024-12345 was found in Unitree humanoid firmware."
+  },
+  {
+    "feed_type": "press_rss",
+    "title": "Follow-up: hijacked home robot cameras used to spy",
+    "url": "https://example.com/a/vendor-b-followup",
+    "published": "2026-08-20",
+    "summary": "Fixture body: follow-up reporting on the Vendor B hijack."
+  }
+]
