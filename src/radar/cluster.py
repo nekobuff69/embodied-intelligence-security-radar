@@ -39,6 +39,21 @@ from radar.schema import (
 
 log = logging.getLogger(__name__)
 
+# ── Vendor-only temporal join window ──────────────────────────────────
+
+VENDOR_JOIN_DAYS = 120  # max days between item.published and incident.first_seen
+
+
+def _parse_date_safe(iso_str: str | None) -> date | None:
+    """Parse an ISO date string; return *None* on *None* or malformed input."""
+    if not iso_str:
+        return None
+    try:
+        return date.fromisoformat(iso_str)
+    except (ValueError, TypeError):
+        return None
+
+
 # ── Deterministic status proposal keywords (ADR-0003) ────────────────
 
 _PATCHED_KEYWORDS = (
@@ -247,31 +262,47 @@ def cluster(
 
         matched_inc: Incident | None = None
 
-        # Stage 0: exact CVE / vendor+model join
-        for inc in reg.incidents:
-            # CVE match
-            inc_cves: set[str] = set()
-            for iid in inc.item_ids:
-                for iobj in reg.items:
-                    if iobj.id == iid:
-                        inc_cves.update(iobj.cve_ids)
-            if item.cve_ids and inc_cves & set(item.cve_ids):
-                matched_inc = inc
-                break
-
-            # Vendor + model match
-            if (
-                item.ai_vendor is not None
-                and inc.vendor
-                and item.ai_vendor.lower() == inc.vendor.lower()
-            ):
-                if item.ai_model is not None and inc.model:
-                    if item.ai_model.lower() == inc.model.lower():
-                        matched_inc = inc
-                        break
-                elif item.ai_model is None and inc.model is None:
+        # Stage 0: exact joins in strict precedence order — three separate
+        # passes over the registry so a weaker rule on an earlier incident
+        # can never shadow a stronger rule on a later one.
+        # Pass 1: CVE join (strongest).
+        if item.cve_ids:
+            item_cves = set(item.cve_ids)
+            for inc in reg.incidents:
+                inc_cves: set[str] = set()
+                for iid in inc.item_ids:
+                    for iobj in reg.items:
+                        if iobj.id == iid:
+                            inc_cves.update(iobj.cve_ids)
+                if inc_cves & item_cves:
                     matched_inc = inc
                     break
+        # Pass 2: full vendor+model.
+        if matched_inc is None and item.ai_vendor is not None:
+            for inc in reg.incidents:
+                if not (inc.vendor and item.ai_vendor.lower() == inc.vendor.lower()):
+                    continue
+                if item.ai_model is not None and inc.model and item.ai_model.lower() == inc.model.lower():
+                    matched_inc = inc
+                    break
+                if item.ai_model is None and inc.model is None:
+                    matched_inc = inc
+                    break
+        # Pass 3: vendor-only temporal join — same vendor, at least one side
+        # has unknown model, within VENDOR_JOIN_DAYS of the incident's
+        # first-seen. Deterministic: no LLM cost, operator can split later.
+        if matched_inc is None and item.ai_vendor is not None:
+            item_date = _parse_date_safe(item.published)
+            if item_date is not None:
+                for inc in reg.incidents:
+                    if not (inc.vendor and item.ai_vendor.lower() == inc.vendor.lower()):
+                        continue
+                    if not (item.ai_model is None or inc.model is None):
+                        continue
+                    inc_date = _parse_date_safe(inc.first_seen)
+                    if inc_date is not None and abs((item_date - inc_date).days) <= VENDOR_JOIN_DAYS:
+                        matched_inc = inc
+                        break
 
         # Stage 1 & 2: embedding + optional LLM
         if matched_inc is None and embedder is not None and candidate_embeddings:

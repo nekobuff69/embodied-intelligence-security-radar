@@ -1,26 +1,6 @@
 {
   "feeds": [
     {
-      "type": "google_news",
-      "name": "Google News: robot hacked",
-      "url": "https://news.google.com/rss/search?q=robot+hacked&hl=en-US&gl=US&ceid=US:en"
-    },
-    {
-      "type": "google_news",
-      "name": "Google News: humanoid robot security",
-      "url": "https://news.google.com/rss/search?q=humanoid+robot+security&hl=en-US&gl=US&ceid=US:en"
-    },
-    {
-      "type": "google_news",
-      "name": "Google News: robot injured worker",
-      "url": "https://news.google.com/rss/search?q=robot+injured+worker&hl=en-US&gl=US&ceid=US:en"
-    },
-    {
-      "type": "google_news",
-      "name": "Google News: robot vulnerability",
-      "url": "https://news.google.com/rss/search?q=robot+vulnerability&hl=en-US&gl=US&ceid=US:en"
-    },
-    {
       "type": "press_rss",
       "name": "BleepingComputer",
       "url": "https://www.bleepingcomputer.com/feed/"

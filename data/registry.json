@@ -19,7 +19,7 @@
         "as_of": "2026-02-27",
         "note": ""
       },
-      "first_seen": "2026-02-27",
+      "first_seen": "2026-02-18",
       "last_checked": "2026-09-09",
       "item_ids": [
         "itm-284c504c9c9d",
@@ -27,7 +27,8 @@
         "itm-ab920f798f7a",
         "itm-5b38e753454f",
         "itm-858a89d0ccda",
-        "itm-c3df500218cb"
+        "itm-c3df500218cb",
+        "itm-2545a6f9d38c"
       ],
       "model": null,
       "ai_summary": null,
@@ -215,31 +216,6 @@
         "itm-8637481c1dd1"
       ],
       "model": null,
-      "ai_summary": null,
-      "monitor_urls": []
-    },
-    {
-      "id": "INC-0009",
-      "title": "DJI Romo Robot Vacuum Security Flaw Allowed Remote Camera and Data Access - Vacuum Wars",
-      "category": "vuln",
-      "robot_class": "consumer",
-      "vendor": "DJI",
-      "severity": {
-        "source": "estimated",
-        "value": "high"
-      },
-      "status": {
-        "state": "disclosed",
-        "evidence_url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9FeHVhZG1zNHVlMHhPeUY3emlDbG5NbGlFeV9hUUNKNXkwaTZSVE9LSmE1aldvNWFib3M0bzBITFVnVmMta0RfUlJsazczZnZ2djZXYWc5RGcyZw?oc=5",
-        "as_of": "2026-02-18",
-        "note": ""
-      },
-      "first_seen": "2026-02-18",
-      "last_checked": "2026-09-09",
-      "item_ids": [
-        "itm-2545a6f9d38c"
-      ],
-      "model": "Romo Robot Vacuum",
       "ai_summary": null,
       "monitor_urls": []
     },

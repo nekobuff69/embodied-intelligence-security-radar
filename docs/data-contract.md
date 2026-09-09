@@ -8,6 +8,8 @@ Single source of truth: `src/radar/schema.py`. Glossary vocabulary per `CONTEXT.
 meta:    {schema_version: 1, generated_at?}
 items:   [{id, source, url, title, body, published, cve_ids?, fetched_at}]
          source ∈ google_news|press_rss|reddit|hn|nvd|github_advisory|vendor_page
+         (google_news is legacy: kept for existing items/fixtures; no longer
+         fetched as of 2026-09-09)
          items also carry optional LLM enrichment (filled by the LLM pass,
          lifted into Incidents by the clusterer): ai_summary?, ai_category?,
          ai_vendor?, ai_model?, ai_robot_class?, ai_severity?, ai_relevant?

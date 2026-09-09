@@ -17,7 +17,9 @@ import pytest
 from datetime import date, timedelta
 
 from radar.cluster import (
+    VENDOR_JOIN_DAYS,
     _cosine,
+    _parse_date_safe,
     _top_k_candidates,
     _trigram_embedder,
     cluster,
@@ -74,6 +76,7 @@ def _incident(
     as_of: str = "2026-08-01",
     item_ids: list[str] | None = None,
     cve_ids_in_items: list[str] | None = None,
+    first_seen: str = "2026-07-01",
 ) -> tuple[Incident, list[Item]]:
     """Create an Incident with attached items carrying CVE IDs."""
     items: list[Item] = []
@@ -102,7 +105,7 @@ def _incident(
         model=model,
         severity=Severity(source="estimated", value="high"),
         status=Status(state=state, evidence_url=evidence_url, as_of=as_of),
-        first_seen="2026-07-01",
+        first_seen=first_seen,
         last_checked=as_of,
         item_ids=iid_list,
     )
@@ -215,6 +218,164 @@ class TestExactJoinVendorModel:
 
         reg, decisions = cluster(reg, [new_item])
         assert decisions[0]["action"] == "attach"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Stage 0: vendor-only temporal join
+# ═══════════════════════════════════════════════════════════════════
+
+
+class TestVendorOnlyTemporalJoin:
+    """Vendor-only temporal join: same vendor, unknown model on at least
+    one side, within VENDOR_JOIN_DAYS → attach at stage 0."""
+
+    def test_dji_no_model_within_window(self):
+        """DJI incident (model 'Romo') + press item (vendor 'DJI', no model,
+        published 90 days after first_seen) → attach (the reported bug)."""
+        inc, items = _incident(vendor="DJI", model="Romo", first_seen="2026-07-01")
+        reg = _registry_with(inc, items)
+
+        new_item = _item(
+            url="https://example.com/dji-press-90d",
+            title="DJI security concern reported",
+            body="A security researcher found an issue with DJI products",
+            ai_vendor="DJI",
+            ai_model=None,  # press item rarely carries model
+            published="2026-10-01",  # 92 days after 2026-07-01
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        assert len(decisions) == 1
+        assert decisions[0]["action"] == "attach"
+        assert decisions[0]["incident_id"] == "INC-0001"
+        assert new_item.id in inc.item_ids
+
+    def test_same_vendor_out_of_window(self):
+        """Same vendor but item published 200 days after first_seen →
+        no vendor-join (falls through to create/defer per eligibility)."""
+        inc, items = _incident(vendor="DJI", model="Romo", first_seen="2026-07-01")
+        reg = _registry_with(inc, items)
+
+        new_item = _item(
+            url="https://example.com/dji-old-report",
+            title="Old DJI report resurfaced",
+            body="Historical DJI vulnerability report",
+            ai_vendor="DJI",
+            ai_model=None,
+            published="2027-01-18",  # 201 days after 2026-07-01
+            ai_relevant=True,
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        # 200 days > VENDOR_JOIN_DAYS (120) → no vendor-only join.
+        # Item is eligible (ai_relevant + vendor) → creates new incident.
+        assert decisions[0]["action"] == "create"
+        assert len(reg.incidents) == 2
+
+    def test_both_models_known_different(self):
+        """Vendor match but both models known and different → NOT
+        vendor-joined (existing model-mismatch semantics preserved)."""
+        inc, items = _incident(vendor="DJI", model="Romo", first_seen="2026-07-01")
+        reg = _registry_with(inc, items)
+
+        new_item = _item(
+            url="https://example.com/dji-air3",
+            title="DJI Air 3 drone vulnerability",
+            body="Critical issue in DJI Air 3 firmware",
+            ai_vendor="DJI",
+            ai_model="Air 3",  # different from incident model "Romo"
+            published="2026-09-01",  # within window
+            ai_relevant=True,
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        # Both models known and different → no match at stage 0.
+        # Item is eligible → creates new incident.
+        assert decisions[0]["action"] == "create"
+        assert len(reg.incidents) == 2
+
+    def test_cve_precedence_over_vendor_only(self):
+        """Item with a CVE matching a DIFFERENT incident attaches there,
+        not to the vendor-only temporal match."""
+        # Incident 1: DJI Romo (no CVE in items)
+        inc1, items1 = _incident(
+            inc_id="INC-0001", vendor="DJI", model="Romo",
+            first_seen="2026-07-01",
+        )
+        # Incident 2: has a CVE
+        inc2, items2 = _incident(
+            inc_id="INC-0002", vendor="Unitree", model="Go2",
+            first_seen="2026-06-15",
+            cve_ids_in_items=["CVE-2026-54321"],
+        )
+        reg = _registry_with(inc1, items1)
+        reg.incidents.append(inc2)
+        reg.items.extend(items2)
+
+        new_item = _item(
+            url="https://example.com/cve-and-vendor",
+            title="CVE-2026-54321 affects DJI products",
+            body="Advisory for CVE-2026-54321 also mentions DJI",
+            cve_ids=["CVE-2026-54321"],
+            ai_vendor="DJI",
+            ai_model=None,
+            published="2026-09-01",  # within window of INC-0001
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        # CVE join wins: attaches to INC-0002 (which has the CVE), not INC-0001
+        assert decisions[0]["action"] == "attach"
+        assert decisions[0]["incident_id"] == "INC-0002"
+        assert new_item.id in inc2.item_ids
+        assert new_item.id not in inc1.item_ids
+
+    def test_malformed_item_date_rejected_at_schema_boundary(self):
+        """Malformed dates can't reach the clusterer: schema.py rejects the
+        Item at construction; fetchers normalize to today. The clusterer's
+        _parse_date_safe is defense-in-depth for lenient construction paths.
+        """
+        import pytest
+
+        with pytest.raises(ValueError, match="published"):
+            _item(
+                url="https://example.com/dji-bad-date",
+                title="DJI item with bad date",
+                body="Something about DJI",
+                ai_vendor="DJI",
+                published="not-a-date",
+            )
+
+    def test_malformed_incident_date_skips_vendor_join(self):
+        """Malformed incident first_seen (constructed valid, mutated after)
+        → temporal branch skipped → full vendor+model doesn't match either
+        (model known on incident, unknown on item) → falls through to create.
+        """
+        inc, items = _incident(vendor="DJI", model="Romo", first_seen="2026-07-01")
+        inc.first_seen = "bad-date"  # bypass validation: defense-in-depth path
+        reg = _registry_with(inc, items)
+
+        new_item = _item(
+            url="https://example.com/dji-bad-inc-date",
+            title="DJI item with good date",
+            body="Something about DJI",
+            ai_vendor="DJI",
+            ai_model=None,
+            published="2026-09-01",
+            ai_relevant=True,
+        )
+
+        reg, decisions = cluster(reg, [new_item])
+
+        assert decisions[0]["action"] == "create"
+        assert len(reg.incidents) == 2
+
+    def test_constant_value(self):
+        """VENDOR_JOIN_DAYS is 120."""
+        assert VENDOR_JOIN_DAYS == 120
 
 
 # ═══════════════════════════════════════════════════════════════════

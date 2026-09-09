@@ -49,7 +49,7 @@ V2 scope unlocks when, 30 days after launch:
 - ADR-0003: Strict claim hygiene for every status claim.
 - ADR-0004: Launch content is pipeline-derived only: the LLM-configured pipeline run produces the incident set; no manual curation layer.
 - Severity: CVSS verbatim where a CVE exists; otherwise Estimated band. Sort treats bands coarsely, ties broken by recency.
-- Sources (v1): Google News keyword RSS, security press (BleepingComputer, The Register, SecurityWeek, Ars Technica) + robotics press (IEEE Spectrum, The Robot Report, TechCrunch) RSS, Reddit (r/robotics, r/Robots, r/unitree) + Hacker News, NVD/CVE keyword feed + GitHub advisories/PoC repos, plus vendor advisory-page monitors with hash-compare state.
+- Sources (v1): security press (BleepingComputer, The Register, SecurityWeek, Ars Technica) + robotics press (IEEE Spectrum, The Robot Report, TechCrunch) RSS, Reddit (r/robotics, r/Robots, r/unitree) + Hacker News, NVD/CVE keyword feed + GitHub advisories/PoC repos, plus vendor advisory-page monitors with hash-compare state. Google News keyword RSS removed (2026-09-09): syndication noise, low signal.
 - LLM: OpenCode Go gateway (`opencode.ai/zen/go/v1`, currently `mimo-v2.5`) via a swappable OpenAI-compatible config (`.env` locally, repo secrets in Actions; session header `x-opencode-session` sent when configured).
 - Hard-fact eligibility (ADR-0004): Incidents are created only from evidence — a CVE id, or `ai_relevant=true` with a non-Unknown vendor; rejected Items are dismissed (URL blocklist) or held in the Wire.
 - Cadence: one daily Actions run (fetch → gate → enrich → cluster → monitor → prune → commit) plus a Pages deploy; pipeline also emits `feed.xml` (RSS) of new/updated Incidents.
