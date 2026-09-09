@@ -9,8 +9,11 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
+import httpx
+
+from radar.cluster import cluster
 from radar.emitters import emit
 from radar.enrich import enrich
 from radar.fetchers import fetch
@@ -110,8 +113,95 @@ def run(
             if it.ai_category is not None or it.ai_summary is not None
         )
 
-    # 4. Apply (idempotent dedup)
-    reg, added = apply_items(reg, gated_items)
+    # 4. Apply (idempotent dedup) — cluster only genuinely new items so the
+    # registry never references deduped-away ids and attachments stay 1:1.
+    seen_urls = {it.url for it in reg.items}
+    new_items: list[Item] = []
+    for it in gated_items:
+        if it.url in seen_urls:
+            continue
+        seen_urls.add(it.url)
+        new_items.append(it)
+    reg, added = apply_items(reg, new_items)
+
+    # 4b. Cluster items into incidents (ADR-0001)
+    cluster_llm: Callable | None = None
+    if llm_key:
+        _base_url = os.environ.get("RADAR_LLM_BASE_URL", "https://api.openai.com/v1")
+        _model = os.environ.get("RADAR_LLM_MODEL", "gpt-4o-mini")
+
+        def _cluster_llm(candidates: list[dict], item: Item) -> dict:
+            """Wrap LLM call for the clusterer's stage-2 verdict."""
+            prompt_parts = [
+                f"Title: {item.title}",
+                f"Body: {item.body}",
+                "",
+                "Candidate incidents (top-{k}):".format(k=len(candidates)),
+            ]
+            for c in candidates:
+                prompt_parts.append(
+                    f"- {c['id']}: {c['title']} (status={c['status']}, "
+                    f"first_seen={c['first_seen']})"
+                )
+            prompt_parts.append("")
+            prompt_parts.append(
+                'Return STRICT JSON: {"action": "attach"|"create", '
+                '"incident_id": "<id if attach>"}'
+            )
+            user_msg = "\n".join(prompt_parts)
+
+            payload = {
+                "model": _model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a security incident clustering assistant. "
+                            "Given an item and candidate incidents, decide whether "
+                            "the item belongs to an existing incident or is new. "
+                            "Return ONLY the JSON object."
+                        ),
+                    },
+                    {"role": "user", "content": user_msg},
+                ],
+                "temperature": 0.0,
+                "max_tokens": 256,
+            }
+            try:
+                headers = {
+                    "Authorization": f"Bearer {llm_key}",
+                    "Content-Type": "application/json",
+                }
+                with httpx.Client() as client:
+                    resp = client.post(
+                        f"{_base_url}/chat/completions",
+                        json=payload,
+                        headers=headers,
+                        timeout=30.0,
+                    )
+                    resp.raise_for_status()
+                    content = resp.json()["choices"][0]["message"]["content"]
+                # Defensive JSON extraction (same pattern as enrich.py)
+                cleaned = content.strip()
+                if cleaned.startswith("```"):
+                    import re as _re
+                    cleaned = _re.sub(r"^```\w*\s*\n?", "", cleaned)
+                    cleaned = _re.sub(r"\n?```\s*$", "", cleaned)
+                    cleaned = cleaned.strip()
+                import json as _json
+                return _json.loads(cleaned)
+            except Exception as exc:
+                return {"action": "create"}
+
+        cluster_llm = _cluster_llm
+
+    reg, cluster_decisions = cluster(reg, new_items, llm=cluster_llm)
+
+    created = sum(1 for d in cluster_decisions if d["action"] == "create")
+    attached = sum(1 for d in cluster_decisions if d["action"] == "attach")
+    status_changed = sum(
+        1 for d in cluster_decisions if "status_proposal" in d
+    )
 
     # 5. Save
     save(reg, registry_path)
@@ -124,6 +214,9 @@ def run(
         "gated": len(gated_items),
         "added": added,
         "enriched": enriched_count,
+        "created": created,
+        "attached": attached,
+        "status_changed": status_changed,
         "llm_provider": llm_provider,
         "llm_model": llm_model,
     }

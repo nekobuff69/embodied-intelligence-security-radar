@@ -1,0 +1,323 @@
+"""Retrieve-then-adjudicate incident clustering (ADR-0001).
+
+Stage 0: exact CVE / vendor+model join — zero LLM cost.
+Stage 1: embedding cosine top-k over open + reopen-window incidents.
+Stage 2: optional LLM verdict on remaining unmatched items.
+
+Status proposals are deterministic: keyword phrases in item text produce
+evidence-carrying proposals (ADR-0003).  The ``llm`` callable is injectable
+(runner wires it from RADAR_LLM_* env vars); when *None* stage 2 is skipped.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import logging
+import math
+import re
+from collections import defaultdict
+from datetime import date, timedelta
+from typing import Callable
+
+from radar.registry import apply_status, attach_item
+from radar.schema import (
+    CATEGORIES,
+    ROBOT_CLASSES,
+    SEVERITY_BANDS,
+    Incident,
+    Item,
+    Registry,
+    Severity,
+    Status,
+    next_incident_id,
+)
+
+log = logging.getLogger(__name__)
+
+# ── Deterministic status proposal keywords (ADR-0003) ────────────────
+
+_PATCHED_KEYWORDS = (
+    "patch released",
+    "fixed in version",
+    "update available",
+    "patch available",
+    "fix shipped",
+)
+
+_EXPLOITED_KEYWORDS = (
+    "actively exploited",
+    "exploited in the wild",
+    "hacked in the wild",
+)
+
+
+# ── Char-trigram embedding (stdlib-only, deterministic) ──────────────
+
+_EMBED_DIM = 256
+
+
+def _trigram_embedder(text: str) -> list[float]:
+    """Deterministic char-trigram hash embedding (no network, no LLM).
+
+    Produces a 256-dim sparse-ish vector suitable for cosine similarity
+    ranking.  Quality is sufficient for top-k candidate selection where
+    an LLM later adjudicates.
+    """
+    text = text.lower()
+    vec = [0.0] * _EMBED_DIM
+    if len(text) < 3:
+        # Pad short texts so they still produce a non-zero vector
+        padded = (text + "   ")[:3]
+        vec[sum(ord(c) for c in padded) % _EMBED_DIM] = 1.0
+        return vec
+    for i in range(len(text) - 2):
+        tri = text[i : i + 3]
+        h = int(hashlib.md5(tri.encode()).hexdigest(), 16)
+        idx = h % _EMBED_DIM
+        vec[idx] += 1.0
+    # L2-normalise
+    norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+    return [v / norm for v in vec]
+
+
+# ── Similarity helpers ────────────────────────────────────────────────
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    """Cosine similarity between two equal-length vectors."""
+    return sum(x * y for x, y in zip(a, b))
+
+
+def _top_k_candidates(
+    query_emb: list[float],
+    index: dict[str, list[float]],
+    k: int = 3,
+    threshold: float = 0.35,
+) -> list[tuple[str, float]]:
+    """Return up to *k* (incident_id, score) pairs above *threshold*."""
+    scored = [
+        (inc_id, _cosine(query_emb, emb))
+        for inc_id, emb in index.items()
+    ]
+    scored.sort(key=lambda t: t[1], reverse=True)
+    return [
+        (inc_id, score)
+        for inc_id, score in scored[:k]
+        if score >= threshold
+    ]
+
+
+# ── Status proposal from item text (deterministic) ───────────────────
+
+
+def _propose_status(text: str, evidence_url: str, as_of: str) -> dict | None:
+    """Return a status proposal dict if text contains known keywords.
+
+    Proposal carries evidence_url and as_of (ADR-0003 hygiene).
+    Returns *None* when no keyword matches.
+    """
+    lower = text.lower()
+    for kw in _PATCHED_KEYWORDS:
+        if kw in lower:
+            return {"state": "patched", "evidence_url": evidence_url, "as_of": as_of}
+    for kw in _EXPLOITED_KEYWORDS:
+        if kw in lower:
+            return {"state": "exploited_in_wild", "evidence_url": evidence_url, "as_of": as_of}
+    return None
+
+
+# ── Main clustering pipeline ─────────────────────────────────────────
+
+
+def cluster(
+    reg: Registry,
+    items: list[Item],
+    embedder: Callable[[str], list[float]] | None = None,
+    llm: Callable[[list[dict], Item], dict] | None = None,
+) -> tuple[Registry, list[dict]]:
+    """Cluster *items* into *reg* incidents.
+
+    Pipeline per item:
+      stage 0  exact CVE / vendor+model join → attach (zero cost)
+      stage 1  embedding cosine top-3 over open + reopen-window incidents
+      stage 2  optional LLM verdict (only when stage 0 missed and stage 1
+               found candidates; ``llm=None`` → skipped)
+
+    Deterministic keyword phrases in item text produce evidence-carrying
+    status proposals (ADR-0003).  Only ``patched`` and ``exploited_in_wild``
+    are proposed; other transitions are human-curated.
+
+    Returns ``(registry, decisions)`` where each decision is::
+
+        {"action": "attach"|"create",
+         "incident_id"?: str,
+         "status_proposal"?: dict}
+    """
+    today = date.today().isoformat()
+    decisions: list[dict] = []
+
+    # ── Build candidate index ────────────────────────────────────────
+
+    open_states = {"disclosed", "unpatched", "exploited_in_wild"}
+    reopen_cutoff = date.today() - timedelta(days=60)
+
+    candidate_index: dict[str, dict] = {}
+    candidate_embeddings: dict[str, list[float]] = {}
+
+    for inc in reg.incidents:
+        is_open = inc.status.state in open_states
+        try:
+            status_date = date.fromisoformat(inc.status.as_of)
+        except (ValueError, TypeError):
+            status_date = date.min
+        is_reopen_window = status_date >= reopen_cutoff
+
+        if is_open or is_reopen_window:
+            candidate_index[inc.id] = {
+                "id": inc.id,
+                "title": inc.title,
+                "vendor": inc.vendor,
+                "model": inc.model,
+                "status": inc.status.state,
+                "first_seen": inc.first_seen,
+            }
+            if embedder is not None:
+                text = f"{inc.title} {inc.vendor} {inc.model or ''}"
+                candidate_embeddings[inc.id] = embedder(text)
+
+    # ── Process each item ────────────────────────────────────────────
+
+    # Pre-compute set of already-attached item IDs for idempotency:
+    # items already clustered into an incident are skipped on re-runs.
+    already_attached: set[str] = set()
+    for inc in reg.incidents:
+        already_attached.update(inc.item_ids)
+
+    for item in items:
+        # Skip items already attached to an incident (idempotent re-run)
+        if item.id in already_attached:
+            continue
+
+        matched_inc: Incident | None = None
+
+        # Stage 0: exact CVE / vendor+model join
+        for inc in reg.incidents:
+            # CVE match
+            inc_cves: set[str] = set()
+            for iid in inc.item_ids:
+                for iobj in reg.items:
+                    if iobj.id == iid:
+                        inc_cves.update(iobj.cve_ids)
+            if item.cve_ids and inc_cves & set(item.cve_ids):
+                matched_inc = inc
+                break
+
+            # Vendor + model match
+            if (
+                item.ai_vendor is not None
+                and inc.vendor
+                and item.ai_vendor.lower() == inc.vendor.lower()
+            ):
+                if item.ai_model is not None and inc.model:
+                    if item.ai_model.lower() == inc.model.lower():
+                        matched_inc = inc
+                        break
+                elif item.ai_model is None and inc.model is None:
+                    matched_inc = inc
+                    break
+
+        # Stage 1 & 2: embedding + optional LLM
+        if matched_inc is None and embedder is not None and candidate_embeddings:
+            query_text = f"{item.title} {item.body}"
+            query_emb = embedder(query_text)
+            top = _top_k_candidates(query_emb, candidate_embeddings)
+
+            if top and llm is not None:
+                candidate_blubs = []
+                for cid, _score in top:
+                    cand = candidate_index[cid]
+                    candidate_blubs.append(
+                        {
+                            "id": cand["id"],
+                            "title": cand["title"],
+                            "status": cand["status"],
+                            "first_seen": cand["first_seen"],
+                        }
+                    )
+                verdict = llm(candidate_blubs, item)
+                action = verdict.get("action", "create")
+                if action == "attach":
+                    vid = verdict.get("incident_id")
+                    for inc in reg.incidents:
+                        if inc.id == vid:
+                            matched_inc = inc
+                            break
+
+        # ── Decision ─────────────────────────────────────────────────
+
+        if matched_inc is not None:
+            # Attach
+            attach_item(matched_inc, item)
+            dec: dict = {"action": "attach", "incident_id": matched_inc.id}
+
+            # Deterministic status proposal from item text keywords
+            proposal = _propose_status(
+                f"{item.title} {item.body}", item.url, item.published
+            )
+            if proposal is not None:
+                changed = apply_status(matched_inc, proposal)
+                if changed:
+                    dec["status_proposal"] = proposal
+
+            decisions.append(dec)
+        else:
+            # Create new incident
+            inc_id = next_incident_id(reg)
+
+            vendor = item.ai_vendor or "Unknown"
+            model = item.ai_model
+            category = item.ai_category if item.ai_category in CATEGORIES else "vuln"
+            robot_class = (
+                item.ai_robot_class
+                if item.ai_robot_class in ROBOT_CLASSES
+                else "consumer"
+            )
+
+            if item.ai_severity and item.ai_severity.value in SEVERITY_BANDS:
+                severity = Severity(source="estimated", value=item.ai_severity.value)
+            else:
+                severity = Severity(source="estimated", value="medium")
+
+            # Deterministic initial status from keywords
+            proposal = _propose_status(
+                f"{item.title} {item.body}", item.url, item.published
+            )
+            if proposal is not None:
+                init_state = proposal["state"]
+                init_evidence = proposal["evidence_url"]
+                init_as_of = proposal["as_of"]
+            else:
+                init_state = "disclosed"
+                init_evidence = item.url
+                init_as_of = item.published
+
+            inc = Incident(
+                id=inc_id,
+                title=item.title,
+                category=category,
+                robot_class=robot_class,
+                vendor=vendor,
+                model=model,
+                severity=severity,
+                status=Status(
+                    state=init_state,
+                    evidence_url=init_evidence,
+                    as_of=init_as_of,
+                ),
+                first_seen=item.published,
+                last_checked=today,
+                item_ids=[item.id],
+            )
+            reg.incidents.append(inc)
+            decisions.append({"action": "create", "incident_id": inc_id})
+
+    return reg, decisions

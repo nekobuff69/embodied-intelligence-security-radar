@@ -3,7 +3,7 @@
     "schema_version": 1,
     "generated_at": "2026-09-09",
     "counts": {
-      "incidents": 3,
+      "incidents": 6,
       "unpatched": 2,
       "max_patch_lag_days": 755
     }
@@ -83,6 +83,79 @@
       ],
       "ai_summary": null,
       "open": true
+    },
+    {
+      "id": "INC-0004",
+      "title": "Unitree Go2 firmware buffer overflow (fixture)",
+      "category": "vuln",
+      "robot_class": "quadruped",
+      "vendor": "Unitree",
+      "model": "Go2",
+      "severity": {
+        "source": "cvss",
+        "value": "8.1"
+      },
+      "status": {
+        "state": "patched",
+        "evidence_url": "https://example.com/advisory/unitree-go2-fix",
+        "as_of": "2026-05-15"
+      },
+      "first_seen": "2026-04-01",
+      "last_checked": "2026-05-15",
+      "item_ids": [
+        "itm-fix00000007"
+      ],
+      "ai_summary": "Fixture summary: buffer overflow in Unitree Go2 firmware allowed remote code execution. Patched in firmware update 2026-05-15.",
+      "open": false
+    },
+    {
+      "id": "INC-0005",
+      "title": "Figure 02 lidar spoofing vulnerability (fixture)",
+      "category": "vuln",
+      "robot_class": "humanoid",
+      "vendor": "Figure",
+      "model": "02",
+      "severity": {
+        "source": "cvss",
+        "value": "9.3"
+      },
+      "status": {
+        "state": "unpatched",
+        "evidence_url": "https://example.com/advisory/figure-02-lidar",
+        "as_of": "2026-09-05"
+      },
+      "first_seen": "2026-09-01",
+      "last_checked": "2026-09-05",
+      "item_ids": [
+        "itm-fix00000008",
+        "itm-fix00000009"
+      ],
+      "ai_summary": "Fixture summary: lidar spoofing allows navigation bypass in Figure 02 humanoid. No fix available as of 2026-09-05.",
+      "open": true
+    },
+    {
+      "id": "INC-0006",
+      "title": "Consumer drone package delivery exploit resolved (fixture)",
+      "category": "vuln",
+      "robot_class": "consumer",
+      "vendor": "Vendor A",
+      "model": null,
+      "severity": {
+        "source": "estimated",
+        "value": "low"
+      },
+      "status": {
+        "state": "resolved",
+        "evidence_url": "https://example.com/advisory/vendor-a-delivery-resolved",
+        "as_of": "2026-06-20"
+      },
+      "first_seen": "2026-03-10",
+      "last_checked": "2026-06-20",
+      "item_ids": [
+        "itm-fix00000010"
+      ],
+      "ai_summary": "Fixture summary: a package delivery exploit in Vendor A consumer robots was resolved via firmware update.",
+      "open": false
     }
   ],
   "items": [
@@ -143,6 +216,46 @@
       "title": "Demo humanoid malfunction traps worker at expo",
       "body": "Fixture body: a humanoid demo unit malfunctioned and trapped a worker behind a barrier.",
       "published": "2026-07-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000007",
+      "source": "vendor_page",
+      "url": "https://example.com/advisory/unitree-go2-fix",
+      "title": "Unitree Go2 firmware update security advisory",
+      "body": "Fixture body: Unitree patched a buffer overflow in Go2 firmware allowing remote code execution.",
+      "published": "2026-05-15",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000008",
+      "source": "press_rss",
+      "url": "https://example.com/a/figure-02-lidar",
+      "title": "Figure 02 lidar spoofing vulnerability disclosed",
+      "body": "Fixture body: researchers demonstrated lidar spoofing on Figure 02 humanoid robot, allowing navigation bypass.",
+      "published": "2026-09-01",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000009",
+      "source": "reddit",
+      "url": "https://example.com/r/robotics/figure-lidar-thread",
+      "title": "Figure 02 navigation bypass exploit discussion",
+      "body": "Fixture body: community discusses the Figure 02 lidar spoofing exploit.",
+      "published": "2026-09-03",
+      "cve_ids": [],
+      "fetched_at": "2026-09-09"
+    },
+    {
+      "id": "itm-fix00000010",
+      "source": "vendor_page",
+      "url": "https://example.com/advisory/vendor-a-delivery-resolved",
+      "title": "Vendor A consumer robot delivery exploit resolved",
+      "body": "Fixture body: package delivery exploit in Vendor A consumer robots resolved via firmware update.",
+      "published": "2026-06-20",
       "cve_ids": [],
       "fetched_at": "2026-09-09"
     }

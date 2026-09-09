@@ -38,6 +38,32 @@
     </div>
   </section>
 
+  <!-- Filter bar -->
+  <section class="filter-bar" id="filter-bar">
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Class</span>
+        <div class="filter-chips" id="filter-chips-class"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Status</span>
+        <div class="filter-chips" id="filter-chips-status"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Vendor</span>
+        <div class="filter-chips" id="filter-chips-vendor"></div>
+      </div>
+    </div>
+    <div class="filter-controls">
+      <div class="sort-control" id="sort-control">
+        <button class="sort-btn active" data-sort="newest">NEWEST</button>
+        <button class="sort-btn" data-sort="severity">SEVERITY</button>
+        <button class="sort-btn" data-sort="patch-lag">PATCH LAG</button>
+      </div>
+      <input type="text" id="search-input" class="search-input" placeholder="Search incidents…" autocomplete="off">
+    </div>
+  </section>
+
   <!-- Category axis cards -->
   <section class="axis-cards" id="axis-cards"></section>
 
