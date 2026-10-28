@@ -122,8 +122,9 @@
           these products. Security researchers and journalists are secondary audiences.
         </p>
         <p>
-          AI-generated summaries are clearly labeled on each incident card and should always be
-          verified against the linked primary source. This site is not security or legal advice.
+          When an incident carries an AI-generated summary, it is clearly labeled on the card and
+          should always be verified against the linked primary source. This site is not security or
+          legal advice.
           All claims are sourced from publicly available information and should be verified with
           the linked sources.
         </p>
@@ -135,13 +136,25 @@
         <p>
           Each day, a pipeline pulls articles from publicly available sources: news outlets, security
           press, robotics press, communities, and vulnerability databases.
-          A deterministic filter screens out anything that is not about a specific robot or robot
-          platform combined with a security or safety event.
-          Surviving articles are reviewed by an AI screening step that discards everything that is
-          not a discrete, verifiable incident&mdash;podcasts, opinion pieces, marketing hype, and
-          speculation never pass.
-          The AI clusters related articles into single Incidents, assigns a status and date, and
-          writes a short buyer-facing summary.
+          A deterministic filter keeps only material that names a specific robot or robot platform
+          together with a security or safety event, and drops stale, drone, industrial-arm, and
+          commentary content.
+          Already-seen and dismissed URLs are removed before any AI processing, so recurring stories
+          cost nothing.
+        </p>
+        <p>
+          When an AI provider is configured, a screening step discards anything that is not a
+          discrete, verifiable incident&mdash;podcasts, opinion pieces, marketing hype, and
+          speculation never pass&mdash;and writes a short buyer-facing summary.
+          Without an AI provider, only Items carrying a CVE id can create Incidents; other Items
+          remain in the registry's Wire and are not displayed.
+        </p>
+        <p>
+          Related Items are clustered into Incidents using exact CVE and vendor/model joins first,
+          then similarity candidates with an optional AI verdict.
+          Status changes require a linked, dated source. A linked vendor advisory page is checked
+          daily: an unchanged page simply advances &ldquo;last checked&rdquo;, while a changed page is
+          interpreted only when an AI provider is configured.
           Results are published as a static site with an RSS feed, updated daily.
         </p>
       </div>
@@ -166,6 +179,15 @@
             vendor may release a fix that the radar has not yet detected.
           </li>
           <li>
+            AI screening, summaries, and advisory-page interpretation are skipped when no provider
+            key is configured. The radar then relies on deterministic joins and CVE evidence, so
+            coverage is narrower.
+          </li>
+          <li>
+            The monitor only checks vendor pages that have been linked to an Incident; a fix
+            published elsewhere can go undetected until the linked page changes.
+          </li>
+          <li>
             Source feed outages or changes surface as failed pipeline runs visible in the
             GitHub Actions log.
           </li>
@@ -186,7 +208,7 @@
           <li>Reddit communities (r/robotics, r/Robots, r/unitree)</li>
           <li>Hacker News</li>
           <li>NVD/CVE</li>
-          <li>GitHub advisories &amp; PoC repos</li>
+          <li>GitHub Security Advisories</li>
           <li>Vendor advisory pages</li>
         </ul>
       </div>

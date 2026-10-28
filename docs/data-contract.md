@@ -34,15 +34,24 @@ incidents: [{id, title, category, robot_class, vendor, model?, severity, status,
 
 - `registry.json` — the store above; git history is the audit trail.
 - `dismissed_urls.json` — URL blocklist; `apply_items` never re-admits a dismissed URL (feeds resurface old stories).
-- `.vendor_hashes.json` — advisory-page hash state driving the `last_checked` monitor (unchanged page advances the date with zero LLM; changed page costs one interpretive call).
+- `.vendor_hashes.json` — advisory-page hash state driving the `last_checked` monitor. An unchanged page advances the date with zero LLM cost. A changed page is interpreted only when it is linked to an Incident and an LLM key is configured; unlinked discovery pages are hashed but never interpreted.
 
 ## Emitter output (`site/data/radar.json`, generated, not committed)
 
-Registry + derived fields: `patch_lag_days` (client-recomputed), `open` bool, counts. Frontend may rely only on fields present in this file.
+Registry plus derived fields. Shape:
+
+```
+meta:      {schema_version, generated_at, counts: {incidents, unpatched, max_patch_lag_days}}
+incidents: [...]   # each carries an `open` bool; patch lag is recomputed client-side from first_seen
+items:     [...]   # the full Item set
+wire:      [...]   # unattached Items; the site does not render this list
+```
+
+The frontend may rely only on fields present in this file.
 
 ## Module & ops surface
 
 - Pipeline writes only `data/registry.json`; emitters write only `site/data/radar.json` + `site/feed.xml`.
-- Runner flags: `radar run --offline` (fixture replay, no network, no LLM), `radar run` (live), `radar emit` (fixture fallback for local dev), `radar prune` (+ `--dry-run`), `radar override` (`--op split|merge|detach`, validated Registry edits).
-- LLM config via env: `RADAR_LLM_API_KEY` (unset ⇒ enrichment/clustering/monitor-interpretation skipped, token-free), `RADAR_LLM_BASE_URL`, `RADAR_LLM_MODEL`, `RADAR_LLM_SESSION_ID` (sent as `x-opencode-session`).
-- Workflows: `daily.yml` (cron 06:00 UTC: fetch→gate→enrich→cluster→monitor→prune→commit `data/`, then triggers deploy), `pages-deploy.yml` (emit + publish to GitHub Pages). No other workflow files.
+- Runner flags: `radar run --offline` (fixture replay, no network, no LLM), `radar run` (live), `radar emit` (fixture fallback for local dev), `radar prune` (+ `--dry-run`), `radar override` (`--op split|merge|detach`, validated Registry edits), `radar link-monitor` (`--incident <id> --url <http(s)>`, links a vendor page for hash-compare monitoring without changing Status).
+- LLM config via env: `RADAR_LLM_API_KEY` (unset ⇒ the LLM pass, cluster verdicts, and monitor interpretation are skipped, token-free; deterministic CVE/vendor joins still run), `RADAR_LLM_BASE_URL`, `RADAR_LLM_MODEL`, `RADAR_LLM_SESSION_ID` (sent as `x-opencode-session`).
+- Workflows: `daily.yml` (cron 06:00 UTC: fetch→gate→filter→enrich→cluster→monitor→prune→commit `data/`, then triggers deploy), `pages-deploy.yml` (emit + publish to GitHub Pages). No other workflow files.

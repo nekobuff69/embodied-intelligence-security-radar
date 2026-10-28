@@ -7,7 +7,7 @@
 | **Item** | A single fetched piece of source content (article, advisory, post) that may attach to an Incident | Story, entry, record |
 | **Incident** | A real-world event or vulnerability, clustered from one or more Items, carrying a Status and evidence | Issue, event, case |
 | **Registry** | The committed store of all Items and Incidents (`data/registry.json`); git history is the audit trail | Store, database, repo |
-| **Wire** | The list of unattached Items displayed on the site as raw, unclustered intel | Feed, stream, raw list |
+| **Wire** | The set of unattached Items held in the Registry. Pipeline-only: the site does not render the Wire | Feed, stream, raw list |
 
 ## Incident lifecycle
 
@@ -27,7 +27,7 @@
 | **LLM pass** | Enrichment stage producing relevance, category, vendor/model/class extraction, severity, and buyer-facing summary on gate survivors | Enrichment (as a stage), AI stage, scoring |
 | **Clusterer** | Groups Items into Incidents via exact join → vendor join → embedding similarity → optional LLM verdict | Deduplicator, grouper, merger |
 | **Prune** | Retroactive pass that dismisses stale/commentary/irrelevant Items and demotes ineligible Incidents | Cleanup, hygiene pass, purge |
-| **Monitor** | Advisory page hash-compare that advances `last_checked` with zero LLM cost when content is unchanged | Watcher, poller, staleness check |
+| **Monitor** | Advisory page hash-compare for pages linked to an Incident; an unchanged page advances `last_checked` with zero LLM cost, and only a changed linked page may cost one interpretive call | Watcher, poller, staleness check |
 
 ## Actions on Items and Incidents
 
@@ -46,7 +46,6 @@
 | **Severity** | Risk rating — CVSS verbatim when present, otherwise an estimated band (low/medium/high/critical) | Risk, score, rating |
 | **Axis card** | Homepage card summarizing one incident category (Vulnerabilities / Attacks / Physical Safety) with count | Category card, filter card |
 | **METHOD page** | The about/methodology page explaining the pipeline, limitations, and disclaimer | Methodology, About, How |
-| **Envelope** | — | — |
 
 ## Sources and data
 
@@ -62,7 +61,7 @@
 - An **Incident** references one or more **Items** as evidence
 - Every **Incident** carries exactly one **Status**, which changes only with a linked source
 - **Dismiss** affects Items; **Demote** affects Incidents
-- The **Rules gate** runs before the **LLM pass**; **Prune** runs after the **Clusterer**
+- The **Rules gate** and the registry/blocklist filters run before the **LLM pass**; **Prune** runs after the **Clusterer**
 - **Hard-fact eligibility** constrains which Items may **Create** Incidents
 - The **Blocklist** persists across runs; **Dismissed** Items never reappear
 
