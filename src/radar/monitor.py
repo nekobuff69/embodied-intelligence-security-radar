@@ -5,10 +5,15 @@ For each vendor_page source (and each Incident.monitor_urls):
 2. SHA-256 hash the content.
 3. Compared to stored hash in ``data/.vendor_hashes.json``:
    - Unchanged  → advance that Incident's last_checked (zero LLM).
-   - Changed    → store new hash; if ``llm`` callable: one interpretive
-                  call → if ``patched:true`` apply_status; else leave.
-                  If ``llm`` is None: leave status, log pending.
+   - Changed    → store new hash.  Only pages linked to an Incident
+                  (via ``incident_id`` on the vendor_page source entry, or
+                  the Incident's ``monitor_urls``) may cost an LLM call:
+                  if ``llm`` callable: one interpretive call → if
+                  ``patched:true`` apply_status; else leave.  If ``llm``
+                  is None: leave status, record pending.
    - New page   → store hash, no LLM call.
+   - Unlinked page (no Incident linkage): hash stored, LLM never called.
+     A discovery-only vendor homepage must not trigger daily calls.
 
 Fetch failures are caught, logged, and skipped — never raised.
 """
@@ -99,13 +104,15 @@ def monitor(
     Returns
     -------
     dict
-        Summary: ``{checked, unchanged, changed, interpreted}``.
+        Summary: ``{checked, unchanged, changed, interpreted, pending}``.
+        ``pending`` counts linked changed pages awaiting an LLM
+        interpretation (no key configured).
     """
     if today is None:
         today = date.today().isoformat()
 
     hashes = _load_hashes(hashes_path)
-    summary = {"checked": 0, "unchanged": 0, "changed": 0, "interpreted": 0}
+    summary = {"checked": 0, "unchanged": 0, "changed": 0, "interpreted": 0, "pending": 0}
 
     # Collect URLs to monitor: from sources config + Incident.monitor_urls
     urls_to_incident: dict[str, str | None] = {}
@@ -146,6 +153,12 @@ def monitor(
         if inc_id:
             touch_last_checked(reg, inc_id, today)
 
+        if not inc_id:
+            # Unlinked page (e.g. a discovery-only vendor homepage):
+            # never spend an interpretive LLM call on it (ADR-0001).
+            log.info("Monitor: %s changed but has no Incident link — LLM skipped", url)
+            continue
+
         if llm is not None:
             try:
                 verdict = llm(content)
@@ -153,7 +166,7 @@ def monitor(
                 log.warning("Monitor LLM call failed for %s: %s", url, exc)
                 verdict = {}
 
-            if verdict.get("patched") is True and inc_id:
+            if verdict.get("patched") is True:
                 summary["interpreted"] += 1
                 for inc in reg.incidents:
                     if inc.id == inc_id:
@@ -164,11 +177,12 @@ def monitor(
                             "note": verdict.get("note", ""),
                         })
                         break
-            elif verdict.get("patched") is True and not inc_id:
-                summary["interpreted"] += 1
-                log.info("LLM says patched for %s but no incident_id linked", url)
         else:
-            log.info("Monitor: %s changed but no LLM key — interpretation pending", url)
+            summary["pending"] += 1
+            log.info(
+                "Monitor: %s changed (linked to %s) but no LLM key — interpretation pending",
+                url, inc_id,
+            )
 
     _save_hashes(hashes_path, hashes)
     return summary

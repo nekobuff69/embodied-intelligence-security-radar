@@ -4,6 +4,7 @@ Usage:
     radar run [--offline] [--registry PATH] [--raw-dir PATH] [--site-dir PATH]
     radar emit [--registry PATH] [--site-dir PATH]
     radar prune [--registry PATH] [--dry-run]
+    radar link-monitor --incident INC-XXXX --url URL [--registry PATH] [--dry-run]
 """
 
 from __future__ import annotations
@@ -112,6 +113,37 @@ def _override(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _link_monitor(args: argparse.Namespace) -> None:
+    """Link a vendor-page URL to an Incident's monitor_urls (ADR-0003: not a Status change)."""
+    from radar.overrides import link_monitor_url, save_atomic
+    from radar.registry import load
+
+    registry_path = Path(args.registry) if args.registry else Path(_default_registry())
+
+    try:
+        reg = load(registry_path)
+        reg, summary = link_monitor_url(reg, args.incident, args.url)
+
+        print(f"Operation: {summary['operation']}")
+        for key, value in summary.items():
+            if key == "operation":
+                continue
+            print(f"  {key}: {value}")
+
+        if args.dry_run:
+            print("\nDry run — no changes written.")
+        else:
+            save_atomic(reg, registry_path)
+            print(f"\nRegistry saved to {registry_path}")
+
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 def _prune(args: argparse.Namespace) -> None:
     from pathlib import Path as _Path
 
@@ -194,6 +226,17 @@ def main() -> None:
         help="Print summary without writing",
     )
     override_parser.set_defaults(func=_override)
+
+    # radar link-monitor
+    link_parser = sub.add_parser(
+        "link-monitor",
+        help="Link a vendor-page URL to an Incident for hash-compare monitoring",
+    )
+    link_parser.add_argument("--incident", required=True, help="Target incident ID")
+    link_parser.add_argument("--url", required=True, help="Vendor page URL (http/https)")
+    link_parser.add_argument("--registry", default=None, help="Registry file path")
+    link_parser.add_argument("--dry-run", action="store_true", help="Print summary without writing")
+    link_parser.set_defaults(func=_link_monitor)
 
     # radar prune
     prune_parser = sub.add_parser(

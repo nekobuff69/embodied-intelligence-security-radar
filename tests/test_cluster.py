@@ -48,6 +48,7 @@ def _item(
     ai_robot_class: str | None = None,
     ai_severity: Severity | None = None,
     ai_relevant: bool | None = None,
+    ai_summary: str | None = None,
     published: str = "2026-09-01",
 ) -> Item:
     return Item(
@@ -64,6 +65,7 @@ def _item(
         ai_robot_class=ai_robot_class,
         ai_severity=ai_severity,
         ai_relevant=ai_relevant,
+        ai_summary=ai_summary,
     )
 
 
@@ -833,6 +835,125 @@ class TestStatusProposals:
         _, dec2 = cluster(reg2, [new_item])
 
         assert dec1 == dec2
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Provenance preservation: CVSS severity + LLM summary (ADR-0003, #14)
+# ═══════════════════════════════════════════════════════════════════
+
+
+class TestIncidentProvenance:
+    """Clusterer must carry LLM-pass provenance onto Incidents: a CVSS
+    severity keeps its source and verbatim score; the buyer-facing
+    ai_summary is copied on create and adopted on attach."""
+
+    def test_cvss_severity_preserved_on_create(self):
+        """Item with a CVSS score → Incident severity is source "cvss"
+        with the score verbatim (no band-estimated downgrade)."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/cvss-create",
+            cve_ids=["CVE-2026-20001"],
+            ai_severity=Severity(source="cvss", value="7.5"),
+        )
+
+        _, decisions = cluster(reg, [item])
+
+        assert decisions[0]["action"] == "create"
+        inc = reg.incidents[-1]
+        assert inc.severity.source == "cvss"
+        assert inc.severity.value == "7.5"
+
+    def test_estimated_band_preserved_on_create(self):
+        """Item with an estimated band → Incident keeps source "estimated"
+        and that band."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/estimated-create",
+            cve_ids=["CVE-2026-20002"],
+            ai_severity=Severity(source="estimated", value="high"),
+        )
+
+        _, decisions = cluster(reg, [item])
+
+        assert decisions[0]["action"] == "create"
+        inc = reg.incidents[-1]
+        assert inc.severity.source == "estimated"
+        assert inc.severity.value == "high"
+
+    def test_no_ai_severity_defaults_to_estimated_medium(self):
+        """Item with no ai_severity → the pre-existing default
+        (estimated/medium) is unchanged."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/no-severity-create",
+            cve_ids=["CVE-2026-20003"],
+        )
+
+        _, decisions = cluster(reg, [item])
+
+        assert decisions[0]["action"] == "create"
+        inc = reg.incidents[-1]
+        assert inc.severity.source == "estimated"
+        assert inc.severity.value == "medium"
+
+    def test_ai_summary_copied_on_create(self):
+        """A new Incident carries the item's LLM summary verbatim."""
+        reg = Registry()
+        summary = "A crafted API call makes the arm swing unexpectedly."
+        item = _item(
+            url="https://example.com/summary-create",
+            cve_ids=["CVE-2026-20004"],
+            ai_summary=summary,
+        )
+
+        _, decisions = cluster(reg, [item])
+
+        assert decisions[0]["action"] == "create"
+        assert reg.incidents[-1].ai_summary == summary
+
+    def test_ai_summary_none_on_create_without_item_summary(self):
+        """An item with no summary produces an Incident with ai_summary
+        None — the clusterer never fabricates a summary."""
+        reg = Registry()
+        item = _item(
+            url="https://example.com/no-summary-create",
+            cve_ids=["CVE-2026-20005"],
+        )
+
+        _, decisions = cluster(reg, [item])
+
+        assert decisions[0]["action"] == "create"
+        assert reg.incidents[-1].ai_summary is None
+
+    def test_ai_summary_adopted_on_attach(self):
+        """Attaching a summary-bearing item to a summary-less Incident
+        adopts the item's summary; a populated summary is never
+        overwritten by a later attachment."""
+        inc, inc_items = _incident(cve_ids_in_items=["CVE-2024-12345"])
+        reg = _registry_with(inc, inc_items)
+        assert inc.ai_summary is None  # fixture: incident starts summary-less
+
+        summary = "Attackers can spoof lidar input to force a fall."
+        attaching = _item(
+            url="https://example.com/summary-attach",
+            cve_ids=["CVE-2024-12345"],
+            ai_summary=summary,
+        )
+
+        _, decisions = cluster(reg, [attaching])
+
+        assert decisions[0]["action"] == "attach"
+        assert inc.ai_summary == summary
+
+        # Second attachment with a different summary must not overwrite.
+        later = _item(
+            url="https://example.com/summary-attach-2",
+            cve_ids=["CVE-2024-12345"],
+            ai_summary="A second, different summary.",
+        )
+        cluster(reg, [later])
+        assert inc.ai_summary == summary
 
 
 # ═══════════════════════════════════════════════════════════════════

@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 import httpx
 
-from radar.cluster import cluster
+from radar.cluster import _trigram_embedder, cluster
 from radar.emitters import emit
 from radar.enrich import enrich
 from radar.fetchers import fetch
@@ -64,17 +64,23 @@ def run(
     registry_path: Path = Path("data/registry.json"),
     raw_dir: Path | None = None,
     site_dir: Path = Path("site"),
+    llm_transport: Callable[[dict], dict] | None = None,
 ) -> dict:
     """Run the full pipeline.
+
+    Stage order: fetch -> gate -> filter -> enrich -> apply -> cluster ->
+    monitor -> save -> emit.
 
     Args:
         offline: If True, load from raw_dir fixtures instead of network.
         registry_path: Path to the registry JSON file.
         raw_dir: Directory containing raw fixture JSON files (offline mode).
         site_dir: Output directory for emitted site files.
+        llm_transport: Injectable callable ``(payload) -> response`` for the
+            enrichment LLM pass (tests). None uses the real httpx client.
 
     Returns:
-        Summary dict with fetched, gated, added counts.
+        Summary dict with fetched, gated, added, skip and enrichment counts.
 
     Raises:
         RuntimeError: On pipeline failure.
@@ -97,34 +103,21 @@ def run(
     # 3. Gate
     gated_items = apply_gate(fetched_items)
 
-    # 3b. LLM enrichment (skipped when RADAR_LLM_API_KEY is unset)
-    enriched_count = 0
-    llm_provider = "skipped"
-    llm_model = "skipped"
-    llm_key = os.environ.get("RADAR_LLM_API_KEY", "")
-    if llm_key:
-        base_url = os.environ.get("RADAR_LLM_BASE_URL") or "https://api.openai.com/v1"
-        model = os.environ.get("RADAR_LLM_MODEL") or "gpt-4o-mini"
-        llm_provider = base_url
-        llm_model = model
-        enrich(gated_items, base_url, model, llm_key)
-        enriched_count = sum(
-            1
-            for it in gated_items
-            if it.ai_category is not None or it.ai_summary is not None
-        )
-
-    # 4. Apply (idempotent dedup) — cluster only genuinely new items so the
-    # registry never references deduped-away ids and attachments stay 1:1.
+    # 3b. Filter stage — runs before any LLM spend: drop already-seen URLs
+    # (idempotent dedup against the registry), then drop dismissed URLs.
+    # Cluster only genuinely new items so the registry never references
+    # deduped-away ids and attachments stay 1:1.
     seen_urls = {it.url for it in reg.items}
+    skipped_seen = 0
     new_items: list[Item] = []
     for it in gated_items:
         if it.url in seen_urls:
+            skipped_seen += 1
             continue
         seen_urls.add(it.url)
         new_items.append(it)
 
-    # 4a. Filter against dismissed-URL blocklist (retroactive pruning)
+    # 3b(i). Filter against dismissed-URL blocklist (retroactive pruning)
     dismissed_path = Path(__file__).resolve().parents[2] / "data" / "dismissed_urls.json"
     dismissed_urls = load_dismissed(dismissed_path)
     dismissed_blocked = 0
@@ -137,6 +130,25 @@ def run(
                 filtered.append(it)
         new_items = filtered
 
+    # 3c. LLM enrichment of the new-items set only (skipped when
+    # RADAR_LLM_API_KEY is unset)
+    enriched_count = 0
+    llm_provider = "skipped"
+    llm_model = "skipped"
+    llm_key = os.environ.get("RADAR_LLM_API_KEY", "")
+    if llm_key:
+        base_url = os.environ.get("RADAR_LLM_BASE_URL") or "https://api.openai.com/v1"
+        model = os.environ.get("RADAR_LLM_MODEL") or "gpt-4o-mini"
+        llm_provider = base_url
+        llm_model = model
+        enrich(new_items, base_url, model, llm_key, transport=llm_transport)
+        enriched_count = sum(
+            1
+            for it in new_items
+            if it.ai_category is not None or it.ai_summary is not None
+        )
+
+    # 4. Apply (idempotent dedup)
     reg, added = apply_items(reg, new_items)
 
     # 4b. Cluster items into incidents (ADR-0001)
@@ -213,7 +225,9 @@ def run(
 
         cluster_llm = _cluster_llm
 
-    reg, cluster_decisions = cluster(reg, new_items, llm=cluster_llm)
+    reg, cluster_decisions = cluster(
+        reg, new_items, embedder=_trigram_embedder, llm=cluster_llm
+    )
 
     created = sum(1 for d in cluster_decisions if d["action"] == "create")
     attached = sum(1 for d in cluster_decisions if d["action"] == "attach")
@@ -292,6 +306,7 @@ def run(
         "fetched": len(fetched_items),
         "gated": len(gated_items),
         "added": added,
+        "skipped_seen": skipped_seen,
         "enriched": enriched_count,
         "created": created,
         "attached": attached,

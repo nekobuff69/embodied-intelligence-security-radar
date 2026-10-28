@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import json
 import shutil
+from datetime import date, timedelta
 from pathlib import Path
 
+import httpx
 import pytest
 
+from radar.registry import load, save
+from radar.schema import Incident, Item, Registry, Severity, Status, item_id_for_url
 from radar.runner import run
 
 FIXTURES_RAW = Path(__file__).resolve().parent / "fixtures" / "raw"
@@ -192,3 +196,236 @@ class TestPipelineSummary:
     def test_added_positive(self, pipeline_result: dict) -> None:
         # New fixture items should have been added
         assert pipeline_result["added"] > 0
+
+
+# ------------------------------------------------------------------
+# 7. Production clusterer: embedding retrieval + LLM adjudication (#15)
+# ------------------------------------------------------------------
+
+_EXISTING_TITLE = "Hospital humanoid robot hack exposes patients"
+_RELATED_TITLE = "Hackers exploit humanoid robot vulnerability to hijack hospital"
+_RELATED_BODY = (
+    "Security researchers published details of a new hospital humanoid robot "
+    "hack that exposes patients to remote takeover."
+)
+_RELATED_URL = "https://example.com/advisories/silvercore-2"
+_CVE_TITLE = "Hospital robot firmware vulnerability exposed by researchers"
+_CVE_BODY = (
+    "Security researchers disclosed a robot vulnerability, CVE-2026-12345, "
+    "affecting hospital fleets."
+)
+_CVE_URL = "https://example.com/advisories/silvercore-cve"
+_CVE_ID = "CVE-2026-12345"
+
+
+def _seed_registry(path: Path) -> tuple[str, str]:
+    """Write a registry holding one open Incident with one attached Item.
+
+    Returns (incident_id, seed_item_id).
+    """
+    seed_url = "https://example.com/advisories/silvercore-1"
+    seed_item = Item(
+        id=item_id_for_url(seed_url),
+        source="press_rss",
+        url=seed_url,
+        title=_EXISTING_TITLE,
+        body="A hospital humanoid robot hack exposes patients.",
+        published=(date.today() - timedelta(days=7)).isoformat(),
+        cve_ids=[_CVE_ID],
+    )
+    inc = Incident(
+        id="INC-0001",
+        title=_EXISTING_TITLE,
+        category="vuln",
+        robot_class="humanoid",
+        vendor="Silvercore",
+        severity=Severity(source="estimated", value="high"),
+        status=Status(
+            state="disclosed",
+            evidence_url=seed_url,
+            as_of=(date.today() - timedelta(days=7)).isoformat(),
+        ),
+        first_seen=(date.today() - timedelta(days=7)).isoformat(),
+        last_checked=(date.today() - timedelta(days=7)).isoformat(),
+        item_ids=[seed_item.id],
+    )
+    save(Registry(incidents=[inc], items=[seed_item]), path)
+    return inc.id, seed_item.id
+
+
+def _write_fixture(raw_dir: Path, entries: list[dict]) -> None:
+    """Write raw fixture entries as the single press_rss feed file."""
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    (raw_dir / "press_rss.json").write_text(json.dumps(entries))
+
+
+def _install_fake_http_llm(
+    monkeypatch: pytest.MonkeyPatch, verdict: dict
+) -> list[str]:
+    """Replace httpx.Client with a deterministic OpenAI-shaped transport.
+
+    Dispatches on the system prompt so the enrichment pass, the clusterer's
+    stage-2 verdict, and the monitor each get a canned response.  Returns the
+    list of observed system prompts (one entry per LLM call).
+    """
+    import json as _json
+
+    observed: list[str] = []
+
+    class _Response:
+        def __init__(self, content: str) -> None:
+            self._content = content
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"choices": [{"message": {"content": self._content}}]}
+
+    class _FakeClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def __enter__(self) -> "_FakeClient":
+            return self
+
+        def __exit__(self, *exc: object) -> bool:
+            return False
+
+        def post(
+            self,
+            url: str,
+            json: dict | None = None,
+            headers: dict | None = None,
+            timeout: float | None = None,
+        ) -> _Response:
+            messages = (json or {}).get("messages") or [{"content": ""}]
+            system = messages[0].get("content", "")
+            observed.append(system)
+            if "clustering assistant" in system:
+                content = _json.dumps(verdict)
+            elif "advisory monitor" in system:
+                content = _json.dumps({"patched": False, "note": "test"})
+            else:
+                content = _json.dumps({"relevant": False})
+            return _Response(content)
+
+    monkeypatch.setattr(httpx, "Client", _FakeClient)
+    return observed
+
+
+class TestProductionEmbeddingAdjudication:
+    """Production run() must use embedding candidate retrieval (stage 1)
+    plus the optional LLM verdict (stage 2) — ADR-0001 wired end to end."""
+
+    def test_related_item_attaches_via_llm_verdict(self, tmp_path: Path, monkeypatch) -> None:
+        """A related Item with no CVE and no exact vendor+model match
+        attaches to the existing Incident instead of creating a duplicate."""
+        monkeypatch.setenv("RADAR_LLM_API_KEY", "test-key")
+        registry_path = tmp_path / "registry.json"
+        raw_dir = tmp_path / "raw"
+        site_dir = tmp_path / "site"
+        inc_id, seed_id = _seed_registry(registry_path)
+        new_id = item_id_for_url(_RELATED_URL)
+        _write_fixture(
+            raw_dir,
+            [
+                {
+                    "title": _RELATED_TITLE,
+                    "url": _RELATED_URL,
+                    "summary": _RELATED_BODY,
+                    "feed_type": "press_rss",
+                    "published": date.today().isoformat(),
+                }
+            ],
+        )
+        observed = _install_fake_http_llm(
+            monkeypatch, {"action": "attach", "incident_id": inc_id}
+        )
+
+        summary = run(
+            offline=True,
+            registry_path=registry_path,
+            raw_dir=raw_dir,
+            site_dir=site_dir,
+        )
+
+        # Stage 2 ran through the HTTP layer and adjudicated an attachment
+        assert any("clustering assistant" in s for s in observed), (
+            "stage-2 verdict was never requested from the LLM"
+        )
+        assert summary["attached"] == 1
+        assert summary["created"] == 0
+
+        # No stage-0 keys on the item: attachment came from embed+verdict
+        reg = load(registry_path)
+        new_item = next(i for i in reg.items if i.id == new_id)
+        assert new_item.cve_ids == []
+        assert new_item.ai_vendor is None
+
+        # Exactly one Incident with both Item ids in the registry
+        assert len(reg.incidents) == 1
+        assert sorted(reg.incidents[0].item_ids) == sorted({seed_id, new_id})
+
+        # ... and in the emitted site data
+        radar = json.loads((site_dir / "data" / "radar.json").read_text())
+        assert len(radar["incidents"]) == 1
+        assert sorted(radar["incidents"][0]["item_ids"]) == sorted({seed_id, new_id})
+
+    def test_no_llm_key_zero_calls_stage0_unchanged(self, tmp_path: Path, monkeypatch) -> None:
+        """Without a key: zero LLM calls; the deterministic stage-0 CVE join
+        still attaches, while stage-1 vectors alone never attach."""
+        monkeypatch.delenv("RADAR_LLM_API_KEY", raising=False)
+        registry_path = tmp_path / "registry.json"
+        raw_dir = tmp_path / "raw"
+        site_dir = tmp_path / "site"
+        inc_id, seed_id = _seed_registry(registry_path)
+        cve_id = item_id_for_url(_CVE_URL)
+        related_id = item_id_for_url(_RELATED_URL)
+        _write_fixture(
+            raw_dir,
+            [
+                {
+                    "title": _CVE_TITLE,
+                    "url": _CVE_URL,
+                    "summary": _CVE_BODY,
+                    "feed_type": "press_rss",
+                    "published": date.today().isoformat(),
+                },
+                {
+                    "title": _RELATED_TITLE,
+                    "url": _RELATED_URL,
+                    "summary": _RELATED_BODY,
+                    "feed_type": "press_rss",
+                    "published": date.today().isoformat(),
+                },
+            ],
+        )
+        observed = _install_fake_http_llm(
+            monkeypatch, {"action": "attach", "incident_id": inc_id}
+        )
+
+        summary = run(
+            offline=True,
+            registry_path=registry_path,
+            raw_dir=raw_dir,
+            site_dir=site_dir,
+        )
+
+        # Zero LLM calls without a key
+        assert observed == []
+        # Stage-0 CVE join still attaches deterministically
+        assert summary["attached"] == 1
+        assert summary["created"] == 0
+        assert summary["enriched"] == 0
+
+        reg = load(registry_path)
+        assert len(reg.incidents) == 1
+        assert sorted(reg.incidents[0].item_ids) == sorted({seed_id, cve_id})
+
+        # Embedding similarity alone must not attach the related Item:
+        # it stays on the wire and no duplicate Incident is created
+        assert related_id in {i.id for i in reg.items}
+        radar = json.loads((site_dir / "data" / "radar.json").read_text())
+        assert len(radar["incidents"]) == 1
+        assert related_id in {w["id"] for w in radar["wire"]}

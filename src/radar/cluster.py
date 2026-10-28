@@ -337,6 +337,10 @@ def cluster(
         if matched_inc is not None:
             # Attach
             attach_item(matched_inc, item)
+            # Summary provenance: adopt the item's LLM summary only when the
+            # incident has none; a populated summary is never overwritten.
+            if matched_inc.ai_summary is None and item.ai_summary:
+                matched_inc.ai_summary = item.ai_summary
             dec: dict = {"action": "attach", "incident_id": matched_inc.id}
 
             # Deterministic status proposal from item text keywords
@@ -374,8 +378,14 @@ def cluster(
                 else "consumer"
             )
 
-            if item.ai_severity and item.ai_severity.value in SEVERITY_BANDS:
-                severity = Severity(source="estimated", value=item.ai_severity.value)
+            # Severity provenance (ADR-0003): a CVSS score from the LLM pass
+            # is carried verbatim onto the Incident; otherwise fall back to
+            # the estimated band, then the medium default.
+            sev = item.ai_severity
+            if sev is not None and sev.source == "cvss":
+                severity = Severity(source="cvss", value=sev.value)
+            elif sev is not None and sev.value in SEVERITY_BANDS:
+                severity = Severity(source="estimated", value=sev.value)
             else:
                 severity = Severity(source="estimated", value="medium")
 
@@ -408,6 +418,7 @@ def cluster(
                 first_seen=item.published,
                 last_checked=today,
                 item_ids=[item.id],
+                ai_summary=item.ai_summary,
             )
             reg.incidents.append(inc)
             # The new incident's vector is the item's query vector — store it

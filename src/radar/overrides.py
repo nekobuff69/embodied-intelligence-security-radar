@@ -279,6 +279,41 @@ def detach_items(
     }
 
 
+# ── Link monitor URL ──────────────────────────────────────────────────
+
+
+def link_monitor_url(
+    reg: Registry,
+    inc_id: str,
+    url: str,
+) -> tuple[Registry, dict]:
+    """Link a vendor-page URL to *inc_id* for hash-compare monitoring.
+
+    Appends *url* to the Incident's ``monitor_urls`` (deduplicated). This
+    is bookkeeping only — per ADR-0003 it is NOT a Status change: no
+    ``state``, ``evidence_url`` or ``as_of`` is invented or touched.
+
+    Returns ``(registry, summary)``.  Raises ``ValueError`` for an unknown
+    incident id or a non-http(s) *url*.
+    """
+    inc = _incident_by_id(reg, inc_id)
+
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        raise ValueError(f"monitor url must be an http(s) URL, got {url!r}")
+
+    already = url in inc.monitor_urls
+    if not already:
+        inc.monitor_urls.append(url)
+
+    return reg, {
+        "operation": "link_monitor",
+        "incident_id": inc_id,
+        "url": url,
+        "already_linked": already,
+    }
+
+
 # ── Atomic save ───────────────────────────────────────────────────────
 
 

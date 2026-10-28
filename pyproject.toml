@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Robot Security Radar - buyer-first security radar for embodied intelligence"
 requires-python = ">=3.11"
 dependencies = [
+    "feedparser>=6.0.11",
     "httpx[socks]>=0.27",
 ]
 
