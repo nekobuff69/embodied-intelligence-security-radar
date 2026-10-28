@@ -148,7 +148,7 @@ def _prune(args: argparse.Namespace) -> None:
     from pathlib import Path as _Path
 
     from radar.prune import prune
-    from radar.registry import load, save_dismissed
+    from radar.registry import load, load_dismissed, save_dismissed
     from radar.overrides import save_atomic
 
     registry_path = _Path(args.registry) if args.registry else _Path("data/registry.json")
@@ -165,8 +165,13 @@ def _prune(args: argparse.Namespace) -> None:
         if args.dry_run:
             print("\nDry run — no changes written.")
         else:
-            # Persist blocklist
-            save_dismissed(dismissed_path, set(summary["dismissed_urls"]))
+            # Persist blocklist: union with the existing set so a prune run
+            # never forgets dismissals recorded by earlier runs.
+            existing_urls = load_dismissed(dismissed_path)
+            save_dismissed(
+                dismissed_path,
+                existing_urls | set(summary["dismissed_urls"]),
+            )
             # Save pruned registry
             save_atomic(reg, registry_path)
             print(f"\nRegistry saved to {registry_path}")

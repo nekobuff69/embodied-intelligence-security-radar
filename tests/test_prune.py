@@ -408,3 +408,26 @@ class TestBlocklistPersistence:
         assert "https://example.com/stale" in summary["dismissed_urls"]
         # Shape is JSON-serializable list
         json.dumps(summary["dismissed_urls"])
+
+    def test_prune_cli_unions_with_existing_blocklist(self, tmp_path, monkeypatch):
+        """A prune run must add to the persisted blocklist, never replace it."""
+        from argparse import Namespace
+
+        from radar.cli import _prune
+        from radar.registry import save
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "data").mkdir()
+        blocklist_path = tmp_path / "data" / "dismissed_urls.json"
+        save_dismissed(blocklist_path, {"https://example.com/already-dismissed"})
+
+        stale = _item(url="https://example.com/newly-stale", published="2000-01-01")
+        registry_path = tmp_path / "registry.json"
+        save(Registry(items=[stale]), registry_path)
+
+        _prune(Namespace(registry=str(registry_path), dry_run=False))
+
+        assert load_dismissed(blocklist_path) == {
+            "https://example.com/already-dismissed",
+            "https://example.com/newly-stale",
+        }
