@@ -2079,6 +2079,23 @@
       "ai_robot_class": null,
       "ai_severity": null,
       "ai_relevant": null
+    },
+    {
+      "id": "itm-2ef5fc9bb766",
+      "source": "press_rss",
+      "url": "https://www.therobotreport.com/white-house-makes-section-232-determination-regarding-foreign-made-robots/",
+      "title": "White House makes Section 232 determination regarding foreign-made robots",
+      "body": "<p>The U.S. secretary of commerce's Section 232 investigation concluded that dependence on robotics imports poses a national security risk.</p>\n<p>The post <a href=\"https://www.therobotreport.com/white-house-makes-section-232-determination-regarding-foreign-made-robots/\">White House makes Section 232 determination regarding foreign-made robots</a> appeared first on <a href=\"https://www.therobotreport.com\">The Robot Report</a>.</p>",
+      "published": "2026-10-29",
+      "cve_ids": [],
+      "fetched_at": "2026-10-30",
+      "ai_summary": null,
+      "ai_category": null,
+      "ai_vendor": null,
+      "ai_model": null,
+      "ai_robot_class": null,
+      "ai_severity": null,
+      "ai_relevant": null
     }
   ]
 }
